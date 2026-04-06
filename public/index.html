@@ -1455,12 +1455,29 @@
       const data = list || appointments;
       const tb = document.getElementById('appt-table');
       if (!tb) return;
-      tb.innerHTML = data.map((a, i) => '<tr><td style="color:var(--accent);font-weight:700">' + a.appointment_time + '</td><td style="color:var(--text)">' + a.patient_name + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + a.id + ', \'' + a.status + '\')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + a.id + ')" title="O\'chirish">🗑</button></div></td></tr>').join('');
+      tb.innerHTML = data.map((a, i) => {
+        let actionBtn = '';
+        if (currentRole === 'doctor') {
+          if (a.status !== 'Davolangan') {
+            actionBtn = '<button class="btn btn-primary btn-sm" onclick="changeApptStatus(' + a.id + ', \'FORCE_DONE\')" title="Qabul qilish">✅ Qabul qilindi</button>';
+          } else {
+            actionBtn = '<span style="color:var(--green);font-size:12px;font-weight:600">Terapiya yakunlandi</span>';
+          }
+        } else {
+          actionBtn = '<button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + a.id + ', \'' + a.status + '\')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + a.id + ')" title="O\'chirish">🗑</button>';
+        }
+        return '<tr><td style="color:var(--accent);font-weight:700">' + a.appointment_time + '</td><td style="color:var(--text)">' + a.patient_name + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px">' + actionBtn + '</div></td></tr>';
+      }).join('');
     }
     function changeApptStatus(id, currentStatus) {
-      const statuses = ['Rejalashtirilgan', 'Kutmoqda', 'Keldi'];
-      const cur = statuses.indexOf(currentStatus);
-      const newStatus = statuses[(cur + 1) % statuses.length];
+      let newStatus = currentStatus;
+      if (currentStatus === 'FORCE_DONE') {
+        newStatus = 'Davolangan';
+      } else {
+        const statuses = ['Rejalashtirilgan', 'Kutmoqda', 'Keldi', 'Davolangan'];
+        const cur = statuses.indexOf(currentStatus);
+        newStatus = statuses[(cur + 1) % statuses.length];
+      }
       fetch('/api/appointments/' + id, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
