@@ -7,6 +7,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Login endpoint
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const { rows } = await db.query(
+            'SELECT * FROM users WHERE username = $1 AND password = $2',
+            [username, password]
+        );
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Login yoki parol noto\'g\'ri!' });
+        }
+        const user = rows[0];
+        res.json({ success: true, role: user.role, username: user.username });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // API route for testing backend
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running!' });

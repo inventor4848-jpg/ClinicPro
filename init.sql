@@ -69,3 +69,11 @@ INSERT INTO inventory (name, category, qty, min_qty, unit, exp_date, crit) VALUE
 ('Amoxicillin 500mg', 'Antibiotik', 12, 50, 'dona', '2025-06', TRUE),
 ('Metformin 1000mg', 'Diabet dori', 250, 100, 'dona', '2025-12', FALSE)
 ON CONFLICT DO NOTHING;
+
+-- Default foydalanuvchilar
+INSERT INTO users (username, password, role) VALUES
+('a123123*', 'a123123*', 'admin'),
+('sh123123*', 'sh123123*', 'doctor'),
+('r123123*', 'r123123*', 'registrar')
+ON CONFLICT (username) DO NOTHING;
+

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinicPro – Kirish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f1117;
+            --bg2: #161b27;
+            --bg3: #1e2535;
+            --border: rgba(255, 255, 255, 0.08);
+            --border2: rgba(255, 255, 255, 0.15);
+            --text: #e8eaf0;
+            --text2: #8b92a5;
+            --text3: #5a6070;
+            --accent: #3b82f6;
+            --accent2: #1d4ed8;
+            --green: #22c55e;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%);
+        }
+
+        .login-card {
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            padding: 40px 36px;
+            width: 380px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .logo-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .logo-sub {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: var(--text2);
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 11px 14px;
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+        }
+
+        .form-control::placeholder {
+            color: var(--text3);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text3);
+            font-size: 16px;
+            user-select: none;
+            transition: color 0.15s;
+        }
+
+        .password-toggle:hover {
+            color: var(--text);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+
+        .btn-login:hover {
+            background: var(--accent2);
+            transform: translateY(-1px);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+
+        .role-hints {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .role-hint-title {
+            font-size: 11px;
+            color: var(--text3);
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .role-badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .role-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .role-badge:hover {
+            transform: translateY(-1px);
+        }
+
+        .badge-admin {
+            background: rgba(59, 130, 246, 0.12);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .badge-doctor {
+            background: rgba(34, 197, 94, 0.12);
+            color: #86efac;
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .badge-registrar {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fcd34d;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-icon">🏥</div>
+            <div class="logo-title">ClinicPro</div>
+            <div class="logo-sub">Klinika Boshqaruv Tizimi</div>
+        </div>
+        <div class="error-msg" id="error-msg">⚠️ Login yoki parol noto'g'ri!</div>
+        <div class="form-group">
+            <label class="form-label">Login</label>
+            <input class="form-control" type="text" id="username" placeholder="Loginni kiriting..."
+                autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Parol</label>
+            <div class="password-wrapper">
+                <input class="form-control" type="password" id="password" placeholder="Parolni kiriting..."
+                    autocomplete="current-password" style="padding-right:40px">
+                <span class="password-toggle" onclick="togglePassword()">👁</span>
+            </div>
+        </div>
+        <button class="btn-login" onclick="doLogin()" id="login-btn">Kirish →</button>
+
+        <div class="role-hints">
+            <div class="role-hint-title">Tezkor kirish</div>
+            <div class="role-badges">
+                <div class="role-badge badge-admin" onclick="fillCreds('a123123*','a123123*')"
+                    title="Admin sifatida kirish">
+                    🔑 Admin
+                </div>
+                <div class="role-badge badge-doctor" onclick="fillCreds('sh123123*','sh123123*')"
+                    title="Shifokor sifatida kirish">
+                    👨‍⚕️ Shifokor
+                </div>
+                <div class="role-badge badge-registrar" onclick="fillCreds('r123123*','r123123*')"
+                    title="Registratura sifatida kirish">
+                    📋 Registratura
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fillCreds(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+            document.getElementById('error-msg').classList.remove('show');
+        }
+        function togglePassword() {
+            const inp = document.getElementById('password');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+        async function doLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const btn = document.getElementById('login-btn');
+            const err = document.getElementById('error-msg');
+            if (!username || !password) { err.textContent = '⚠️ Login va parolni kiriting!'; err.classList.add('show'); return; }
+            btn.textContent = 'Tekshirilmoqda...'; btn.disabled = true;
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) { err.textContent = '⚠️ ' + (data.error || 'Noto\'g\'ri login yoki parol!'); err.classList.add('show'); btn.textContent = 'Kirish →'; btn.disabled = false; return; }
+                // Save role + username to sessionStorage
+                sessionStorage.setItem('cp_role', data.role);
+                sessionStorage.setItem('cp_user', data.username);
+                window.location.href = '/';
+            } catch (e) {
+                err.textContent = '⚠️ Server bilan ulanib bo\'lmadi. Qayta urinib ko\'ring.';
+                err.classList.add('show');
+                btn.textContent = 'Kirish →'; btn.disabled = false;
+            }
+        }
+        // Enter key support
+        document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+        // If already logged in, redirect
+        if (sessionStorage.getItem('cp_role')) window.location.href = '/';
+    </script>
+</body>
+
+</html>

@@ -732,25 +732,15 @@
       <div class="logo-title">🏥 ClinicPro</div>
       <div class="logo-sub">Boshqaruv tizimi v1.0</div>
     </div>
-    <div class="nav">
-      <div class="nav-label">Asosiy</div>
-      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Boshqaruv paneli
-      </div>
-      <div class="nav-item" onclick="showPage('patients',this)"><span class="nav-icon">👥</span>Bemorlar</div>
-      <div class="nav-item" onclick="showPage('appointments',this)"><span class="nav-icon">📅</span>Qabullar<span
-          class="nav-badge">3</span></div>
-      <div class="nav-item" onclick="showPage('doctors',this)"><span class="nav-icon">👨‍⚕️</span>Shifokorlar</div>
-      <div class="nav-label" style="margin-top:10px">Moliya</div>
-      <div class="nav-item" onclick="showPage('billing',this)"><span class="nav-icon">💰</span>To'lovlar</div>
-      <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">📈</span>Hisobotlar</div>
-      <div class="nav-label" style="margin-top:10px">Boshqaruv</div>
-      <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">💊</span>Dori-darmon<span
-          class="nav-badge warn">!</span></div>
-      <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>Sozlamalar</div>
+    <div class="nav" id="sidebar-nav">
+      <!-- Role-based nav is rendered by JS -->
     </div>
     <div class="sidebar-footer">
-      <div class="name">Dr. Alisher Karimov</div>
-      <div>Bosh shifokor · Admin</div>
+      <div class="name" id="footer-name">...</div>
+      <div id="footer-role">...</div>
+      <button onclick="doLogout()"
+        style="margin-top:8px;width:100%;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">🚪
+        Chiqish</button>
     </div>
   </div>
   <div class="main">
@@ -1225,6 +1215,57 @@
     </div>
   </div>
   <script>
+    // ─── AUTH GUARD ────────────────────────────────────────────
+    const currentRole = sessionStorage.getItem('cp_role');
+    const currentUser = sessionStorage.getItem('cp_user');
+    if (!currentRole) { window.location.href = '/login.html'; }
+
+    // ─── ROLE DEFINITIONS ──────────────────────────────────────
+    const ROLE_LABELS = { admin: '🔑 Admin', doctor: '👨‍⚕️ Shifokor', registrar: '📋 Registratura' };
+    const NAV_ALL = [
+      { label: 'Asosiy', type: 'section' },
+      { page: 'dashboard', icon: '📊', label: 'Boshqaruv paneli', roles: ['admin', 'doctor', 'registrar'] },
+      { page: 'patients', icon: '👥', label: 'Bemorlar', roles: ['admin', 'doctor', 'registrar'] },
+      { page: 'appointments', icon: '📅', label: 'Qabullar', badge: '!', badgeClass: '', roles: ['admin', 'doctor', 'registrar'] },
+      { page: 'doctors', icon: '👨‍⚕️', label: 'Shifokorlar', roles: ['admin'] },
+      { label: 'Moliya', type: 'section', roles: ['admin'] },
+      { page: 'billing', icon: '💰', label: 'To\'lovlar', roles: ['admin'] },
+      { page: 'reports', icon: '📈', label: 'Hisobotlar', roles: ['admin'] },
+      { label: 'Boshqaruv', type: 'section', roles: ['admin', 'registrar'] },
+      { page: 'inventory', icon: '💊', label: 'Dori-darmon', badge: '!', badgeClass: 'warn', roles: ['admin', 'registrar'] },
+      { page: 'settings', icon: '⚙️', label: 'Sozlamalar', roles: ['admin'] },
+    ];
+
+    function buildNav() {
+      const nav = document.getElementById('sidebar-nav');
+      if (!nav) return;
+      let html = '';
+      let first = true;
+      NAV_ALL.forEach(item => {
+        if (item.roles && !item.roles.includes(currentRole)) return;
+        if (item.type === 'section') {
+          html += '<div class="nav-label"' + (first ? '' : ' style="margin-top:10px"') + '>' + item.label + '</div>';
+          first = false; return;
+        }
+        const badge = item.badge ? '<span class="nav-badge ' + (item.badgeClass || '') + '">' + item.badge + '</span>' : '';
+        html += '<div class="nav-item" onclick="showPage(\'' + item.page + '\',this)" data-page="' + item.page + '"><span class="nav-icon">' + item.icon + '</span>' + item.label + badge + '</div>';
+      });
+      nav.innerHTML = html;
+      // Activate first item
+      const first_item = nav.querySelector('.nav-item');
+      if (first_item) first_item.classList.add('active');
+      // Set footer
+      document.getElementById('footer-name').textContent = currentUser;
+      document.getElementById('footer-role').textContent = ROLE_LABELS[currentRole] || currentRole;
+    }
+    buildNav();
+
+    function doLogout() {
+      sessionStorage.removeItem('cp_role');
+      sessionStorage.removeItem('cp_user');
+      window.location.href = '/login.html';
+    }
+
     let patients = [];
     let appointments = [];
     const doctors = [
