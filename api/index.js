@@ -1,0 +1,129 @@
+const express = require('express');
+const cors = require('cors');
+const db = require('./db');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// API route for testing backend
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Backend is running!' });
+});
+
+// Patients CRUD
+app.get('/api/patients', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM patients ORDER BY last_visit DESC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/patients', async (req, res) => {
+    const { id, first_name, last_name, dob, gender, phone, address, complaint, diag, doctor, note, status, last_visit } = req.body;
+    try {
+        const query = `
+      INSERT INTO patients (id, first_name, last_name, dob, gender, phone, address, complaint, diag, doctor, note, status, last_visit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *
+    `;
+        const values = [id, first_name, last_name, dob, gender, phone, address, complaint, diag, doctor, note, status, last_visit];
+        const { rows } = await db.query(query, values);
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Appointments CRUD
+app.get('/api/appointments', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM appointments ORDER BY appointment_date, appointment_time');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/appointments', async (req, res) => {
+    const { patient_name, appointment_date, appointment_time, doctor, type, status, note } = req.body;
+    try {
+        const query = `
+      INSERT INTO appointments (patient_name, appointment_date, appointment_time, doctor, type, status, note)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `;
+        const values = [patient_name, appointment_date, appointment_time, doctor, type, status, note];
+        const { rows } = await db.query(query, values);
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Inventory CRUD
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM inventory ORDER BY name');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Finance CRUD
+app.get('/api/finance', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM finance ORDER BY date DESC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Stats API
+app.get('/api/stats', async (req, res) => {
+    try {
+        const patientsRes = await db.query('SELECT COUNT(*) FROM patients');
+        const appointmentsRes = await db.query('SELECT COUNT(*) FROM appointments WHERE appointment_date = CURRENT_DATE');
+        // Using dummy date strings here since we insert dummy datetimes... using actual db logic
+        const totalPatients = parseInt(patientsRes.rows[0].count, 10);
+        const todayAppointments = parseInt(appointmentsRes.rows[0].count, 10);
+
+        // Monthly income dummy query
+        const financeRes = await db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM finance`);
+        const monthlyIncome = financeRes.rows[0].total;
+
+        // Inventory alerts
+        const lowStockRes = await db.query('SELECT COUNT(*) FROM inventory WHERE qty < min_qty');
+        const lowStock = parseInt(lowStockRes.rows[0].count, 10);
+
+        res.json({
+            totalPatients,
+            todayAppointments,
+            monthlyIncome,
+            lowStock
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Dashboard alerts endpoint
+app.get('/api/alerts', async (req, res) => {
+    try {
+        const lowStock = await db.query('SELECT name, qty FROM inventory WHERE qty <= 10');
+        const alerts = lowStock.rows.map(item => ({
+            type: 'red',
+            message: `💊 ${item.name} zaxirasi tugayapti (${item.qty} dona qoldi)`
+        }));
+        // We can push other dynamic alerts based on logic
+        res.json(alerts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Export the express app so Vercel can serve it via Serverless function
+module.exports = app;
