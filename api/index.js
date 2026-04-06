@@ -153,11 +153,41 @@ app.get('/api/inventory', async (req, res) => {
     }
 });
 
+app.post('/api/inventory', async (req, res) => {
+    const { name, category, qty, min_qty, unit, exp_date, crit } = req.body;
+    try {
+        const query = `
+      INSERT INTO inventory (name, category, qty, min_qty, unit, exp_date, crit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `;
+        const values = [name, category, qty || 0, min_qty || 50, unit || 'dona', exp_date || '', crit || false];
+        const { rows } = await db.query(query, values);
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Finance CRUD
 app.get('/api/finance', async (req, res) => {
     try {
         const { rows } = await db.query('SELECT * FROM finance ORDER BY date DESC');
         res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/finance', async (req, res) => {
+    const { id, patient_name, service, amount, date, type, status } = req.body;
+    try {
+        const query = `
+      INSERT INTO finance (id, patient_name, service, amount, date, type, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+    `;
+        const values = [id, patient_name, service, amount, date, type, status];
+        const { rows } = await db.query(query, values);
+        res.status(201).json(rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

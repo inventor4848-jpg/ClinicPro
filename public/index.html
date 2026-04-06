@@ -904,9 +904,10 @@
       </div>
       <div class="page" id="page-doctors">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-          <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)">6</strong>
+          <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)"
+              id="doctor-count">0</strong>
             shifokor</span>
-          <button class="btn btn-primary" onclick="alert('Yangi shifokor qo\'shish modali (keyingi versiyada)')">+ Yangi
+          <button class="btn btn-primary" onclick="openModal('add-doctor-modal')">+ Yangi
             shifokor</button>
         </div>
         <div class="doctors-grid" id="doctors-grid"></div>
@@ -941,7 +942,7 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">To'lov operatsiyalari</div><button class="btn btn-primary btn-sm"
-              onclick="alert('Yangi to\'lov qo\'shish')">+ Yangi to'lov</button>
+              onclick="openModal('add-finance-modal')">+ Yangi to'lov</button>
           </div>
           <div style="overflow-x:auto">
             <table>
@@ -1027,7 +1028,7 @@
             turi mavjud</span>
           <div style="display:flex;gap:10px">
             <button class="btn btn-outline" onclick="alert('Buyurtma berish')">📦 Buyurtma berish</button>
-            <button class="btn btn-primary" onclick="alert('Yangi dori qo\'shish')">+ Dori qo'shish</button>
+            <button class="btn btn-primary" onclick="openModal('add-inventory-modal')">+ Dori qo'shish</button>
           </div>
         </div>
         <div class="card">
@@ -1211,6 +1212,85 @@
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('patient-detail-modal')">Yopish</button>
         <button class="btn btn-primary" onclick="alert('Tahrirlash rejimi (keyingi versiyada)')">✏️ Tahrirlash</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-doctor-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">👨‍⚕️ Yangi shifokor qo'shish</div>
+        <button class="modal-close" onclick="closeModal('add-doctor-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">F.I.O. *</label>
+        <input class="form-control" id="doc-name" placeholder="Dr. Ism Familiya">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Mutaxassislik *</label>
+          <input class="form-control" id="doc-spec" placeholder="Kardiolog">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tajriba</label>
+          <input class="form-control" id="doc-exp" placeholder="Masalan: 5 yil">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-doctor-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addDoctor()">✅ Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-finance-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">💰 Yangi to'lov qabul qilish</div>
+        <button class="modal-close" onclick="closeModal('add-finance-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bemor</label>
+        <input class="form-control" id="fin-patient" placeholder="Bemor ismi...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Xizmat</label>
+        <input class="form-control" id="fin-service" placeholder="Konsultatsiya, UZI...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Summa (so'm) *</label>
+        <input class="form-control" type="number" id="fin-amount" placeholder="50000">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-finance-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addFinance()">✅ To'lovni tasdiqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-inventory-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">💊 Yangi dori qo'shish</div>
+        <button class="modal-close" onclick="closeModal('add-inventory-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nomi *</label>
+        <input class="form-control" id="inv-name" placeholder="Dori nomi...">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Miqdori *</label>
+          <input class="form-control" type="number" id="inv-qty" placeholder="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategoriya</label>
+          <input class="form-control" id="inv-cat" placeholder="Antibiotiklar, Vitaminlar...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-inventory-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addInventory()">✅ Saqlash</button>
       </div>
     </div>
   </div>
@@ -1441,6 +1521,54 @@
       document.getElementById('appt-date').value = '';
       alert('✅ Qabul ' + date + ' sanaga ' + time + ' uchun muvaffaqiyatli rejalashtirildi!');
     }
+
+    function addDoctor() {
+      const name = document.getElementById('doc-name').value;
+      const spec = document.getElementById('doc-spec').value;
+      const exp = document.getElementById('doc-exp').value;
+      if (!name || !spec) { alert('⚠️ Ism va mutaxassislik kiritish majburiy!'); return; }
+      fetch('/api/doctors', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, spec, exp })
+      }).then(() => loadData());
+      closeModal('add-doctor-modal');
+      alert(`✅ Shifokor ${name} muvaffaqiyatli qo'shildi!`);
+    }
+
+    function addFinance() {
+      const patient = document.getElementById('fin-patient').value;
+      const service = document.getElementById('fin-service').value;
+      const amount = document.getElementById('fin-amount').value;
+      if (!amount) { alert('⚠️ Summani kiriting!'); return; }
+      fetch('/api/finance', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'T-' + String(billing.length + 1).padStart(4, '0'),
+          patient_name: patient,
+          service,
+          amount,
+          date: new Date().toISOString().split('T')[0],
+          type: 'Karta',
+          status: 'To\'langan'
+        })
+      }).then(() => loadData());
+      closeModal('add-finance-modal');
+      alert(`✅ ${amount} so'm to'lov qabul qilindi!`);
+    }
+
+    function addInventory() {
+      const name = document.getElementById('inv-name').value;
+      const qty = document.getElementById('inv-qty').value;
+      const category = document.getElementById('inv-cat').value;
+      if (!name || !qty) { alert('⚠️ Nomi va miqdorini kiriting!'); return; }
+      fetch('/api/inventory', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, qty, category, unit: 'dona', exp_date: '2026-12', crit: false })
+      }).then(() => loadData());
+      closeModal('add-inventory-modal');
+      alert(`✅ ${name} dori-darmoni bazaga qo'shildi!`);
+    }
+
     function globalSearch(q) {
       if (!q || q.length < 2) return;
       const lq = q.toLowerCase();
