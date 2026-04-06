@@ -143,6 +143,15 @@ app.post('/api/doctors', async (req, res) => {
     }
 });
 
+app.delete('/api/doctors/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM doctors WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Inventory CRUD
 app.get('/api/inventory', async (req, res) => {
     try {

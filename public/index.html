@@ -1348,24 +1348,18 @@
 
     let patients = [];
     let appointments = [];
-    const doctors = [
-      { name: 'Dr. Alisher Karimov', spec: 'Terapevt', exp: '15 yil', patients: 142, rating: 4.9, load: 85, color: 'var(--accent)' },
-      { name: 'Dr. Bobur Nazarov', spec: 'Kardiolog', exp: '12 yil', patients: 98, rating: 4.8, load: 60, color: 'var(--green)' },
-      { name: 'Dr. Nilufar Yusupova', spec: 'Nevropatolog', exp: '10 yil', patients: 87, rating: 4.7, load: 92, color: 'var(--purple)' },
-      { name: 'Dr. Jasur Mirzaev', spec: 'Jarroh', exp: '18 yil', patients: 64, rating: 4.9, load: 45, color: 'var(--amber)' },
-      { name: 'Dr. Sabohat Nazarova', spec: 'Ginekolog', exp: '8 yil', patients: 115, rating: 4.6, load: 70, color: 'var(--teal)' },
-      { name: "Dr. Ulug'bek Toshev", spec: 'Pediatr', exp: '6 yil', patients: 201, rating: 4.8, load: 55, color: 'var(--red)' },
-    ];
+    let doctors = [];
     let billing = [];
     let inventory = [];
 
     async function loadData() {
       try {
-        const [pRes, aRes, bRes, iRes, sRes] = await Promise.all([
-          fetch('/api/patients'), fetch('/api/appointments'), fetch('/api/finance'), fetch('/api/inventory'), fetch('/api/stats')
+        const [pRes, aRes, dRes, bRes, iRes, sRes] = await Promise.all([
+          fetch('/api/patients'), fetch('/api/appointments'), fetch('/api/doctors'), fetch('/api/finance'), fetch('/api/inventory'), fetch('/api/stats')
         ]);
         if (pRes.ok) patients = await pRes.json();
         if (aRes.ok) appointments = await aRes.json();
+        if (dRes.ok) doctors = await dRes.json();
         if (bRes.ok) billing = await bRes.json();
         if (iRes.ok) inventory = await iRes.json();
         if (sRes.ok) {
@@ -1477,8 +1471,13 @@
     }
     function renderDoctors() {
       const g = document.getElementById('doctors-grid');
+      const dc = document.getElementById('doctor-count');
+      if (dc) dc.textContent = doctors.length;
       if (!g) return;
-      g.innerHTML = doctors.map((d, i) => '<div class="card" style="transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + '">' + initials(d.name || '') + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>').join('');
+      g.innerHTML = doctors.map((d, i) => {
+        const adminControls = currentRole === 'admin' ? '<button class="btn btn-danger btn-sm" onclick="deleteDoctor(' + d.id + ')" style="position:absolute;top:12px;right:12px;padding:4px 8px;font-size:10px;">🗑 O\'chirish</button>' : '';
+        return '<div class="card" style="position:relative;transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">' + adminControls + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + '">' + initials(d.name || '') + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>';
+      }).join('');
     }
     function renderBilling() {
       const tb = document.getElementById('billing-table');
@@ -1530,9 +1529,20 @@
       fetch('/api/doctors', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, spec, exp })
-      }).then(() => loadData());
-      closeModal('add-doctor-modal');
-      alert(`✅ Shifokor ${name} muvaffaqiyatli qo'shildi!`);
+      }).then(() => {
+        loadData();
+        closeModal('add-doctor-modal');
+        alert(`✅ Shifokor ${name} muvaffaqiyatli qo'shildi!`);
+        document.getElementById('doc-name').value = '';
+        document.getElementById('doc-spec').value = '';
+        document.getElementById('doc-exp').value = '';
+      });
+    }
+
+    function deleteDoctor(id) {
+      if (confirm("Shifokorni o'chirishni xohlaysizmi?")) {
+        fetch('/api/doctors/' + id, { method: 'DELETE' }).then(() => loadData());
+      }
     }
 
     function addFinance() {
@@ -1551,9 +1561,14 @@
           type: 'Karta',
           status: 'To\'langan'
         })
-      }).then(() => loadData());
-      closeModal('add-finance-modal');
-      alert(`✅ ${amount} so'm to'lov qabul qilindi!`);
+      }).then(() => {
+        loadData();
+        closeModal('add-finance-modal');
+        alert(`✅ ${amount} so'm to'lov qabul qilindi!`);
+        document.getElementById('fin-patient').value = '';
+        document.getElementById('fin-service').value = '';
+        document.getElementById('fin-amount').value = '';
+      });
     }
 
     function addInventory() {
@@ -1564,9 +1579,14 @@
       fetch('/api/inventory', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, qty, category, unit: 'dona', exp_date: '2026-12', crit: false })
-      }).then(() => loadData());
-      closeModal('add-inventory-modal');
-      alert(`✅ ${name} dori-darmoni bazaga qo'shildi!`);
+      }).then(() => {
+        loadData();
+        closeModal('add-inventory-modal');
+        alert(`✅ ${name} dori-darmoni bazaga qo'shildi!`);
+        document.getElementById('inv-name').value = '';
+        document.getElementById('inv-qty').value = '';
+        document.getElementById('inv-cat').value = '';
+      });
     }
 
     function globalSearch(q) {
