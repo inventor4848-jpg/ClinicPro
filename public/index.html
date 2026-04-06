@@ -1370,7 +1370,9 @@
           if (sa) sa.textContent = stats.todayAppointments.toLocaleString();
         }
       } catch (e) { console.error('Error fetching data:', e); }
-      renderPage('dashboard');
+      const activePage = document.querySelector('.page.active');
+      const pageName = activePage ? activePage.id.replace('page-', '') : 'dashboard';
+      renderPage(pageName);
     }
     const pageTitles = { dashboard: 'Boshqaruv paneli', patients: 'Bemorlar', appointments: 'Qabullar', doctors: 'Shifokorlar', billing: "To'lovlar", reports: 'Hisobotlar', inventory: 'Dori-darmon', settings: 'Sozlamalar' };
     function showPage(name, el) {
