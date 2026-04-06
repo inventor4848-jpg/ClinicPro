@@ -37,6 +37,25 @@ app.post('/api/patients', async (req, res) => {
     }
 });
 
+app.delete('/api/patients/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM patients WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/patients/:id', async (req, res) => {
+    const { status } = req.body;
+    try {
+        await db.query('UPDATE patients SET status = $1 WHERE id = $2 RETURNING *', [status, req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Appointments CRUD
 app.get('/api/appointments', async (req, res) => {
     try {
@@ -55,6 +74,50 @@ app.post('/api/appointments', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
     `;
         const values = [patient_name, appointment_date, appointment_time, doctor, type, status, note];
+        const { rows } = await db.query(query, values);
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+    const { status } = req.body;
+    try {
+        await db.query('UPDATE appointments SET status = $1 WHERE id = $2', [status, req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/appointments/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM appointments WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Doctors CRUD
+app.get('/api/doctors', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM doctors ORDER BY name');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/doctors', async (req, res) => {
+    const { name, spec, exp, patients, rating, load } = req.body;
+    try {
+        const query = `
+      INSERT INTO doctors (name, spec, exp, patients, rating, load)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+    `;
+        const values = [name, spec, exp, patients || 0, rating || 5.0, load || 0];
         const { rows } = await db.query(query, values);
         res.status(201).json(rows[0]);
     } catch (err) {

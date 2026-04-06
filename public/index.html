@@ -982,23 +982,28 @@
               <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px">
                 <span style="font-size:13px;color:var(--text2)">Jami qabullar</span><strong
-                  style="font-size:18px;color:var(--accent)">312</strong></div>
+                  style="font-size:18px;color:var(--accent)">312</strong>
+              </div>
               <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px">
                 <span style="font-size:13px;color:var(--text2)">Yangi bemorlar</span><strong
-                  style="font-size:18px;color:var(--green)">48</strong></div>
+                  style="font-size:18px;color:var(--green)">48</strong>
+              </div>
               <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px">
                 <span style="font-size:13px;color:var(--text2)">Amaliyotlar</span><strong
-                  style="font-size:18px;color:var(--purple)">12</strong></div>
+                  style="font-size:18px;color:var(--purple)">12</strong>
+              </div>
               <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px">
                 <span style="font-size:13px;color:var(--text2)">Laboratoriya tahlillari</span><strong
-                  style="font-size:18px;color:var(--teal)">187</strong></div>
+                  style="font-size:18px;color:var(--teal)">187</strong>
+              </div>
               <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px">
                 <span style="font-size:13px;color:var(--text2)">Davolangan bemorlar</span><strong
-                  style="font-size:18px;color:var(--green)">76</strong></div>
+                  style="font-size:18px;color:var(--green)">76</strong>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -1277,37 +1282,50 @@
     function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
     function renderDashboard() {
       const ts = document.getElementById('today-schedule');
-      if (ts) ts.innerHTML = appointments.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient) + '</div><div style="flex:1"><div class="slot-name">' + a.patient + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
+      if (ts) ts.innerHTML = appointments.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.appointment_time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient_name || '') + '</div><div style="flex:1"><div class="slot-name">' + a.patient_name + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
       const dl = document.getElementById('doc-load');
       if (dl) dl.innerHTML = doctors.slice(0, 4).map(d => '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">' + d.name + ' <span style="color:var(--text3)">(' + d.spec + ')</span></span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div>').join('');
       const rp = document.getElementById('recent-patients');
-      if (rp) rp.innerHTML = patients.slice(0, 5).map((p, i) => '<tr><td style="color:var(--text3);font-size:11px">' + p.id + '</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:' + avatarColor(i) + '">' + initials(p.last + ' ' + p.first) + '</div><span style="color:var(--text)">' + p.last + ' ' + p.first + '</span></div></td><td style="color:var(--text3)">' + getAge(p.dob) + '</td><td>' + p.diag + '</td><td style="color:var(--accent)">' + p.doctor + '</td><td style="color:var(--text3)">' + p.last_visit + '</td><td>' + statusBadge(p.status) + '</td></tr>').join('');
+      if (rp) rp.innerHTML = patients.slice(0, 5).map((p, i) => {
+        const last = p.last_name || p.last || '';
+        const first = p.first_name || p.first || '';
+        return '<tr><td style="color:var(--text3);font-size:11px">' + p.id + '</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:' + avatarColor(i) + '">' + initials(last + ' ' + first) + '</div><span style="color:var(--text)">' + last + ' ' + first + '</span></div></td><td style="color:var(--text3)">' + getAge(p.dob) + '</td><td>' + p.diag + '</td><td style="color:var(--accent)">' + p.doctor + '</td><td style="color:var(--text3)">' + p.last_visit + '</td><td>' + statusBadge(p.status) + '</td></tr>';
+      }).join('');
     }
     function renderPatients(list) {
       const data = list || patients;
       document.getElementById('patient-count').textContent = data.length;
       const tb = document.getElementById('patients-table');
       if (!tb) return;
-      tb.innerHTML = data.length === 0 ? '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Hech qanday bemor topilmadi</td></tr>' : data.map((p, i) => '<tr><td style="color:var(--text3);font-size:11px">' + p.id + '</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:' + avatarColor(i) + '">' + initials(p.last + ' ' + p.first) + '</div><span style="color:var(--text)">' + p.last + ' ' + p.first + '</span></div></td><td style="color:var(--text3)">' + p.dob + '</td><td style="color:var(--text3)">' + getAge(p.dob) + '</td><td>' + p.phone + '</td><td>' + p.diag + '</td><td style="color:var(--accent)">' + p.doctor + '</td><td>' + statusBadge(p.status) + '</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="viewPatient(' + i + ')">👁 Ko\'rish</button><button class="btn btn-danger btn-sm" onclick="deletePatient(' + i + ')">🗑</button></div></td></tr>').join('');
+      tb.innerHTML = data.length === 0 ? '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Hech qanday bemor topilmadi</td></tr>' : data.map((p, i) => {
+        const last = p.last_name || p.last || '';
+        const first = p.first_name || p.first || '';
+        return '<tr><td style="color:var(--text3);font-size:11px">' + p.id + '</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:' + avatarColor(i) + '">' + initials(last + ' ' + first) + '</div><span style="color:var(--text)">' + last + ' ' + first + '</span></div></td><td style="color:var(--text3)">' + p.dob + '</td><td style="color:var(--text3)">' + getAge(p.dob) + '</td><td>' + p.phone + '</td><td>' + p.diag + '</td><td style="color:var(--accent)">' + p.doctor + '</td><td>' + statusBadge(p.status) + '</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="viewPatient(\'' + p.id + '\')">👁 Ko\'rish</button><button class="btn btn-danger btn-sm" onclick="deletePatient(\'' + p.id + '\', \'' + first + '\')">🗑</button></div></td></tr>';
+      }).join('');
     }
     function filterPatients() {
       const q = (document.getElementById('patient-search').value || '').toLowerCase();
       const doc = document.getElementById('filter-doctor').value;
       const status = document.getElementById('filter-status').value;
       renderPatients(patients.filter(p => {
-        const name = (p.last + ' ' + p.first).toLowerCase();
+        const last = p.last_name || p.last || '';
+        const first = p.first_name || p.first || '';
+        const name = (last + ' ' + first).toLowerCase();
         return (!q || name.includes(q) || p.phone.includes(q) || p.id.toLowerCase().includes(q) || p.diag.toLowerCase().includes(q)) && (!doc || p.doctor === doc) && (!status || p.status === status);
       }));
     }
     function viewPatient(idx) {
-      const p = patients[idx]; if (!p) return;
-      document.getElementById('detail-name').textContent = p.last + ' ' + p.first;
-      document.getElementById('patient-detail-content').innerHTML = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px"><div class="patient-avatar" style="width:56px;height:56px;font-size:18px;background:' + avatarColor(idx) + '">' + initials(p.last + ' ' + p.first) + '</div><div><div style="font-size:18px;font-weight:600">' + p.last + ' ' + p.first + '</div><div style="font-size:13px;color:var(--text3);margin-top:4px">' + p.id + ' · ' + getAge(p.dob) + ' yosh · ' + p.gender + '</div><div style="margin-top:8px">' + statusBadge(p.status) + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><div style="color:var(--text3);margin-bottom:2px">Telefon</div><div style="color:var(--text)">' + p.phone + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Manzil</div><div style="color:var(--text)">' + (p.address || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Tug\'ilgan sana</div><div style="color:var(--text)">' + (p.dob || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Oxirgi tashrif</div><div style="color:var(--text)">' + (p.last_visit || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Diagnoz</div><div style="color:var(--amber);font-weight:500">' + p.diag + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Mas\'ul shifokor</div><div style="color:var(--accent)">' + p.doctor + '</div></div></div>' + (p.note ? '<div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:#fcd34d">📋 Izoh: ' + p.note + '</div>' : '');
+      const p = patients.find(x => x.id === idx); if (!p) return;
+      const last = p.last_name || p.last || ''; const first = p.first_name || p.first || '';
+      document.getElementById('detail-name').textContent = last + ' ' + first;
+      document.getElementById('patient-detail-content').innerHTML = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px"><div class="patient-avatar" style="width:56px;height:56px;font-size:18px;background:' + avatarColor(0) + '">' + initials(last + ' ' + first) + '</div><div><div style="font-size:18px;font-weight:600">' + last + ' ' + first + '</div><div style="font-size:13px;color:var(--text3);margin-top:4px">' + p.id + ' · ' + getAge(p.dob) + ' yosh · ' + p.gender + '</div><div style="margin-top:8px">' + statusBadge(p.status) + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><div style="color:var(--text3);margin-bottom:2px">Telefon</div><div style="color:var(--text)">' + p.phone + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Manzil</div><div style="color:var(--text)">' + (p.address || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Tug\'ilgan sana</div><div style="color:var(--text)">' + (p.dob || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Oxirgi tashrif</div><div style="color:var(--text)">' + (p.last_visit || '—') + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Diagnoz</div><div style="color:var(--amber);font-weight:500">' + p.diag + '</div></div><div><div style="color:var(--text3);margin-bottom:2px">Mas\'ul shifokor</div><div style="color:var(--accent)">' + p.doctor + '</div></div></div>' + (p.note ? '<div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:#fcd34d">📋 Izoh: ' + p.note + '</div>' : '');
       openModal('patient-detail-modal');
     }
-    function deletePatient(idx) {
-      const p = patients[idx];
-      if (confirm(p.last + ' ' + p.first + " ni o'chirishni tasdiqlaysizmi?\nBu amalni qaytarib bo'lmaydi!")) { patients.splice(idx, 1); renderPatients(); alert("✅ Bemor ro'yxatdan o'chirildi."); }
+    function deletePatient(id, name) {
+      if (confirm(name + " ni o'chirishni tasdiqlaysizmi?\nBu amalni qaytarib bo'lmaydi!")) {
+        fetch('/api/patients/' + id, { method: 'DELETE' }).then(() => loadData());
+        alert("✅ Bemor ro'yxatdan o'chirildi.");
+      }
     }
     let currentApptFilter = 'today';
     function filterAppts(filter, el) {
@@ -1320,24 +1338,31 @@
       const data = list || appointments;
       const tb = document.getElementById('appt-table');
       if (!tb) return;
-      tb.innerHTML = data.map((a, i) => '<tr><td style="color:var(--accent);font-weight:700">' + a.time + '</td><td style="color:var(--text)">' + a.patient + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + i + ')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + i + ')" title="O\'chirish">🗑</button></div></td></tr>').join('');
+      tb.innerHTML = data.map((a, i) => '<tr><td style="color:var(--accent);font-weight:700">' + a.appointment_time + '</td><td style="color:var(--text)">' + a.patient_name + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + a.id + ', \'' + a.status + '\')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + a.id + ')" title="O\'chirish">🗑</button></div></td></tr>').join('');
     }
-    function changeApptStatus(i) {
+    function changeApptStatus(id, currentStatus) {
       const statuses = ['Rejalashtirilgan', 'Kutmoqda', 'Keldi'];
-      const cur = statuses.indexOf(appointments[i].status);
-      appointments[i].status = statuses[(cur + 1) % statuses.length];
-      renderAppointments();
+      const cur = statuses.indexOf(currentStatus);
+      const newStatus = statuses[(cur + 1) % statuses.length];
+      fetch('/api/appointments/' + id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      }).then(() => loadData());
     }
-    function deleteAppt(i) { if (confirm("Bu qabulni o'chirishni tasdiqlaysizmi?")) { appointments.splice(i, 1); renderAppointments(); } }
+    function deleteAppt(id) {
+      if (confirm("Bu qabulni o'chirishni tasdiqlaysizmi?")) {
+        fetch('/api/appointments/' + id, { method: 'DELETE' }).then(() => loadData());
+      }
+    }
     function renderDoctors() {
       const g = document.getElementById('doctors-grid');
       if (!g) return;
-      g.innerHTML = doctors.map((d, i) => '<div class="card" style="transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + '">' + initials(d.name) + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>').join('');
+      g.innerHTML = doctors.map((d, i) => '<div class="card" style="transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + '">' + initials(d.name || '') + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>').join('');
     }
     function renderBilling() {
       const tb = document.getElementById('billing-table');
       if (!tb) return;
-      tb.innerHTML = billing.map(b => '<tr><td style="color:var(--text3);font-size:11px">' + b.id + '</td><td style="color:var(--text)">' + b.patient + '</td><td>' + b.service + '</td><td style="font-weight:700;color:var(--green)">' + b.amount + " so'm" + '</td><td style="color:var(--text3)">' + b.date + '</td><td><span class="badge badge-blue">' + b.type + '</span></td><td>' + statusBadge(b.status) + '</td><td><button class="btn btn-outline btn-sm" onclick="alert(\'Chek: ' + b.id + '\')">🧾 Chek</button></td></tr>').join('');
+      tb.innerHTML = billing.map(b => '<tr><td style="color:var(--text3);font-size:11px">' + b.id + '</td><td style="color:var(--text)">' + b.patient_name + '</td><td>' + b.service + '</td><td style="font-weight:700;color:var(--green)">' + b.amount + " so'm" + '</td><td style="color:var(--text3)">' + b.date + '</td><td><span class="badge badge-blue">' + b.type + '</span></td><td>' + statusBadge(b.status) + '</td><td><button class="btn btn-outline btn-sm" onclick="alert(\'Chek: ' + b.id + '\')">🧾 Chek</button></td></tr>').join('');
     }
     function renderReports() {
       const dc = document.getElementById('diag-chart'); if (!dc) return;
@@ -1355,17 +1380,18 @@
       const last = (document.getElementById('p-last').value || '').trim(), first = (document.getElementById('p-first').value || '').trim(), phone = (document.getElementById('p-phone').value || '').trim();
       if (!last || !first) { alert('⚠️ Familiya va ism majburiy!'); return; }
       if (!phone) { alert('⚠️ Telefon raqami majburiy!'); return; }
-      const newP = { id: 'B-' + String(patients.length + 1).padStart(3, '0'), last, first, dob: document.getElementById('p-dob').value || '', gender: document.getElementById('p-gender').value, phone, address: document.getElementById('p-address').value || '', diag: document.getElementById('p-diag').value || 'Tekshirilmoqda', doctor: document.getElementById('p-doc').value, note: document.getElementById('p-note').value || '', status: 'Faol', last_visit: new Date().toISOString().split('T')[0] };
+      const newP = { id: 'B-' + String((patients.length) + 1).padStart(3, '0'), last_name: last, first_name: first, dob: document.getElementById('p-dob').value || '', gender: document.getElementById('p-gender').value, phone, address: document.getElementById('p-address').value || '', diag: document.getElementById('p-diag').value || 'Tekshirilmoqda', doctor: document.getElementById('p-doc').value, note: document.getElementById('p-note').value || '', status: 'Faol', last_visit: new Date().toISOString().split('T')[0] };
       fetch('/api/patients', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newP)
       }).then(() => loadData());
-      alert('✅ ' + newP.last + ' ' + newP.first + " muvaffaqiyatli ro'yxatga qo'shildi!");
+      closeModal('add-patient-modal');
+      alert('✅ ' + newP.last_name + ' ' + newP.first_name + " muvaffaqiyatli ro'yxatga qo'shildi!");
     }
     function addAppointment() {
       const patient = document.getElementById('appt-patient').value, date = document.getElementById('appt-date').value, time = document.getElementById('appt-time').value;
       if (!date) { alert('⚠️ Sana majburiy!'); return; }
-      const newA = { time, patient_name: patient.split('(')[0].trim(), doctor: document.getElementById('appt-doc').value, type: document.getElementById('appt-type').value, status: 'Rejalashtirilgan' };
+      const newA = { appointment_time: time, appointment_date: date, patient_name: patient.split('(')[0].trim(), doctor: document.getElementById('appt-doc').value, type: document.getElementById('appt-type').value, status: 'Rejalashtirilgan' };
       fetch('/api/appointments', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newA)
