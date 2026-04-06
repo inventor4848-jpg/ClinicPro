@@ -1,0 +1,577 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinicPro – Klinika Boshqaruv Tizimi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f1117; --bg2: #161b27; --bg3: #1e2535;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #e8eaf0; --text2: #8b92a5; --text3: #5a6070;
+    --accent: #3b82f6; --accent2: #1d4ed8;
+    --green: #22c55e; --green2: #166534;
+    --red: #ef4444; --amber: #f59e0b;
+    --purple: #a855f7; --teal: #14b8a6;
+    --radius: 10px; --radius-lg: 14px;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow: hidden; }
+  .sidebar { width: 230px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; }
+  .logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+  .logo-title { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; user-select: none; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+  .nav-badge.warn { background: var(--amber); }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text3); }
+  .sidebar-footer .name { font-weight: 500; color: var(--text2); margin-bottom: 2px; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100vh; }
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .search-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; color: var(--text); width: 220px; outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text3); }
+  .avatar { width: 32px; height: 32px; background: var(--accent2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+  .notif-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: 14px; position: relative; }
+  .notif-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; }
+  .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
+  .stat-value { font-size: 26px; font-weight: 700; }
+  .stat-change { font-size: 12px; margin-top: 4px; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+  .stat-icon { font-size: 22px; float: right; margin-top: -4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-btn { font-size: 12px; color: var(--accent); cursor: pointer; background: none; border: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; color: var(--text3); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-green  { background: rgba(34,197,94,0.15);  color: var(--green); }
+  .badge-amber  { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .badge-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+  .badge-blue   { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .badge-purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+  .btn-outline:hover { background: var(--bg3); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-danger { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-control { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-control:focus { border-color: var(--accent); }
+  .form-control::placeholder { color: var(--text3); }
+  select.form-control option { background: var(--bg2); color: var(--text); }
+  textarea.form-control { resize: vertical; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 24px; width: 500px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text3); font-size: 22px; cursor: pointer; line-height: 1; padding: 0; }
+  .modal-close:hover { color: var(--text); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .patient-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; background: rgba(59,130,246,0.15); color: var(--accent); }
+  .schedule-slot { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: background 0.15s; }
+  .schedule-slot:hover { background: rgba(255,255,255,0.04); }
+  .slot-time { font-size: 12px; color: var(--accent); font-weight: 700; min-width: 50px; }
+  .slot-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .slot-type { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .mini-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .mini-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .alert-red    { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #fca5a5; }
+  .alert-amber  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 8px 18px; font-size: 13px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; transition: all 0.15s; user-select: none; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .inventory-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .inventory-row:last-child { border-bottom: none; }
+  .inv-name { flex: 1; }
+  .inv-qty { font-size: 14px; font-weight: 700; min-width: 70px; text-align: center; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  .doctors-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: 1fr; } .doctors-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 768px) { .sidebar { width: 200px; } .stats-grid { grid-template-columns: 1fr 1fr; } .grid-2 { grid-template-columns: 1fr; } .doctors-grid { grid-template-columns: 1fr; } .modal { width: calc(100vw - 40px); } }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-title">🏥 ClinicPro</div>
+    <div class="logo-sub">Boshqaruv tizimi v1.0</div>
+  </div>
+  <div class="nav">
+    <div class="nav-label">Asosiy</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Boshqaruv paneli</div>
+    <div class="nav-item" onclick="showPage('patients',this)"><span class="nav-icon">👥</span>Bemorlar</div>
+    <div class="nav-item" onclick="showPage('appointments',this)"><span class="nav-icon">📅</span>Qabullar<span class="nav-badge">3</span></div>
+    <div class="nav-item" onclick="showPage('doctors',this)"><span class="nav-icon">👨‍⚕️</span>Shifokorlar</div>
+    <div class="nav-label" style="margin-top:10px">Moliya</div>
+    <div class="nav-item" onclick="showPage('billing',this)"><span class="nav-icon">💰</span>To'lovlar</div>
+    <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">📈</span>Hisobotlar</div>
+    <div class="nav-label" style="margin-top:10px">Boshqaruv</div>
+    <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">💊</span>Dori-darmon<span class="nav-badge warn">!</span></div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span>Sozlamalar</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="name">Dr. Alisher Karimov</div>
+    <div>Bosh shifokor · Admin</div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Boshqaruv paneli</div>
+    <div class="topbar-right">
+      <input class="search-box" type="text" id="global-search" placeholder="🔍  Bemor, shifokor yoki xizmat qidirish..." oninput="globalSearch(this.value)">
+      <div class="notif-btn" onclick="showNotifications()" title="Bildirishnomalar">🔔<div class="notif-dot"></div></div>
+      <div class="avatar" title="Profil" onclick="showPage('settings',null)">AK</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Jami bemorlar</div><div class="stat-value" style="color:var(--accent)" id="stat-patients">1,284</div><div class="stat-change up">↑ 12% bu oy</div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-label">Bugungi qabullar</div><div class="stat-value" style="color:var(--green)" id="stat-appts">24</div><div class="stat-change up">↑ 3 ta yangi</div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Oylik daromad</div><div class="stat-value" style="color:var(--amber)">42.5M</div><div class="stat-change up">↑ 8.3% o'sish</div></div>
+        <div class="stat-card"><div class="stat-icon">💊</div><div class="stat-label">Kam zaxiradagi dorlar</div><div class="stat-value" style="color:var(--red)">3</div><div class="stat-change down">↓ Zaxira to'ldiring!</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📅 Bugungi qabul jadvali</div><button class="btn btn-primary btn-sm" onclick="showPage('appointments',null)">Barchasini ko'r</button></div>
+          <div id="today-schedule"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card"><div class="card-header"><div class="card-title">👨‍⚕️ Shifokorlar bandligi</div></div><div id="doc-load"></div></div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚠️ Ogohlantirishlar</div></div>
+            <div class="alert alert-red">💊 Amoxicillin zaxirasi tugayapti (12 dona qoldi)</div>
+            <div class="alert alert-amber">📋 5 ta tahlil natijasi kutilmoqda</div>
+            <div class="alert alert-red">💳 2 ta to'lov muddati o'tdi</div>
+            <div class="alert alert-amber">🏥 Ertaga 3 ta jarrohlik rejalashtirilgan</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🧑‍🤝‍🧑 So'nggi qo'shilgan bemorlar</div><button class="btn btn-outline btn-sm" onclick="showPage('patients',null)">Barchasini ko'r →</button></div>
+        <table><thead><tr><th>ID</th><th>F.I.O.</th><th>Yoshi</th><th>Diagnoz</th><th>Shifokor</th><th>Oxirgi tashrif</th><th>Holat</th></tr></thead><tbody id="recent-patients"></tbody></table>
+      </div>
+    </div>
+    <div class="page" id="page-patients">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:13px;color:var(--text3)">Jami <strong id="patient-count" style="color:var(--text)">0</strong> bemor ro'yxatda</div>
+        <button class="btn btn-primary" onclick="openModal('add-patient-modal')">+ Yangi bemor qo'shish</button>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <input class="form-control" style="flex:1;min-width:200px;width:auto" id="patient-search" placeholder="Ism, telefon yoki ID bo'yicha qidirish..." oninput="filterPatients()">
+          <select class="form-control" style="width:190px" id="filter-doctor" onchange="filterPatients()">
+            <option value="">Barcha shifokorlar</option>
+            <option>Dr. Karimov (Terapevt)</option>
+            <option>Dr. Nazarov (Kardiolog)</option>
+            <option>Dr. Yusupova (Nevropatolog)</option>
+            <option>Dr. Mirzaev (Jarroh)</option>
+          </select>
+          <select class="form-control" style="width:160px" id="filter-status" onchange="filterPatients()">
+            <option value="">Barcha holatlar</option>
+            <option>Faol</option><option>Davolash</option><option>Davolangan</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>ID</th><th>F.I.O.</th><th>Tug'ilgan sana</th><th>Yoshi</th><th>Telefon</th><th>Diagnoz</th><th>Shifokor</th><th>Holat</th><th>Amal</th></tr></thead><tbody id="patients-table"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-appointments">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="tabs" style="margin-bottom:0;flex:1">
+          <div class="tab active" onclick="filterAppts('today',this)">Bugun</div>
+          <div class="tab" onclick="filterAppts('tomorrow',this)">Ertaga</div>
+          <div class="tab" onclick="filterAppts('week',this)">Bu hafta</div>
+          <div class="tab" onclick="filterAppts('all',this)">Barcha</div>
+        </div>
+        <button class="btn btn-primary" style="margin-left:16px" onclick="openModal('add-appt-modal')">+ Yangi qabul</button>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Vaqt</th><th>Bemor</th><th>Shifokor</th><th>Xizmat turi</th><th>Holat</th><th>Amal</th></tr></thead><tbody id="appt-table"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-doctors">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)">6</strong> shifokor</span>
+        <button class="btn btn-primary" onclick="alert('Yangi shifokor qo\'shish modali (keyingi versiyada)')">+ Yangi shifokor</button>
+      </div>
+      <div class="doctors-grid" id="doctors-grid"></div>
+    </div>
+    <div class="page" id="page-billing">
+      <div class="stats-grid" style="margin-bottom:24px">
+        <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-label">Bugungi tushumlar</div><div class="stat-value" style="font-size:20px;color:var(--green)">3,450,000</div><div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div></div>
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-label">Oylik tushumlar</div><div class="stat-value" style="font-size:20px;color:var(--accent)">42,500,000</div><div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Kutilayotgan to'lovlar</div><div class="stat-value" style="font-size:20px;color:var(--amber)">5,200,000</div><div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div></div>
+        <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-label">Muddati o'tgan</div><div class="stat-value" style="font-size:20px;color:var(--red)">1,800,000</div><div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">To'lov operatsiyalari</div><button class="btn btn-primary btn-sm" onclick="alert('Yangi to\'lov qo\'shish')">+ Yangi to'lov</button></div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Raqam</th><th>Bemor</th><th>Xizmat</th><th>Summa</th><th>Sana</th><th>To'lov turi</th><th>Holat</th><th>Amal</th></tr></thead><tbody id="billing-table"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-reports">
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Oylik statistika (Yanvar 2024)</div></div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:13px;color:var(--text2)">Jami qabullar</span><strong style="font-size:18px;color:var(--accent)">312</strong></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:13px;color:var(--text2)">Yangi bemorlar</span><strong style="font-size:18px;color:var(--green)">48</strong></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:13px;color:var(--text2)">Amaliyotlar</span><strong style="font-size:18px;color:var(--purple)">12</strong></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:13px;color:var(--text2)">Laboratoriya tahlillari</span><strong style="font-size:18px;color:var(--teal)">187</strong></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:8px"><span style="font-size:13px;color:var(--text2)">Davolangan bemorlar</span><strong style="font-size:18px;color:var(--green)">76</strong></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">📋 Top diagnozlar</div></div><div id="diag-chart"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📁 Hisobotlarni yuklab olish</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <button class="btn btn-outline" onclick="alert('PDF hisobot tayyorlanmoqda...')">📄 Oylik hisobot (PDF)</button>
+          <button class="btn btn-outline" onclick="alert('Excel yuklanmoqda...')">📊 Moliyaviy hisobot (Excel)</button>
+          <button class="btn btn-outline" onclick="alert('Statistika yuklanmoqda...')">📈 Statistik tahlil</button>
+          <button class="btn btn-outline" onclick="alert('Bemorlar ro\'yxati yuklanmoqda...')">👥 Bemorlar ro'yxati</button>
+          <button class="btn btn-outline" onclick="alert('Shifokorlar hisoboti...')">👨‍⚕️ Shifokorlar hisoboti</button>
+          <button class="btn btn-outline" onclick="alert('Dori-darmon hisoboti...')">💊 Dori-darmon hisoboti</button>
+        </div>
+      </div>
+    </div>
+    <div class="page" id="page-inventory">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)">142</strong> ta dori turi mavjud</span>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="alert('Buyurtma berish')">📦 Buyurtma berish</button>
+          <button class="btn btn-primary" onclick="alert('Yangi dori qo\'shish')">+ Dori qo'shish</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💊 Dori-darmon zaxirasi</div><input class="form-control" style="width:220px" placeholder="Dori qidirish..."></div>
+        <div id="inventory-list"></div>
+      </div>
+    </div>
+    <div class="page" id="page-settings">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏥 Klinika ma'lumotlari</div></div>
+          <div class="form-group"><label class="form-label">Klinika nomi</label><input class="form-control" value="ClinicPro Klinikasi"></div>
+          <div class="form-group"><label class="form-label">Litsenziya raqami</label><input class="form-control" value="UZ-MED-2024-00142"></div>
+          <div class="form-group"><label class="form-label">Manzil</label><input class="form-control" value="Toshkent sh., Chilonzor t., 12-uy"></div>
+          <div class="form-group"><label class="form-label">Telefon</label><input class="form-control" value="+998 71 234 56 78"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-control" value="info@clinicpro.uz"></div>
+          <div class="form-group"><label class="form-label">Veb-sayt</label><input class="form-control" value="www.clinicpro.uz"></div>
+          <button class="btn btn-primary" onclick="alert('✅ Ma\'lumotlar saqlandi!')">Saqlash</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚙️ Tizim sozlamalari</div></div>
+            <div class="form-group"><label class="form-label">Ish vaqti boshlanishi</label><input class="form-control" type="time" value="08:00"></div>
+            <div class="form-group"><label class="form-label">Ish vaqti tugashi</label><input class="form-control" type="time" value="18:00"></div>
+            <div class="form-group"><label class="form-label">Qabul davomiyligi</label><select class="form-control"><option>15 daqiqa</option><option selected>30 daqiqa</option><option>45 daqiqa</option><option>60 daqiqa</option></select></div>
+            <div class="form-group"><label class="form-label">Valyuta</label><select class="form-control"><option selected>UZS (so'm)</option><option>USD</option></select></div>
+            <div class="form-group"><label class="form-label">Til</label><select class="form-control"><option selected>O'zbekcha</option><option>Russian</option><option>English</option></select></div>
+            <button class="btn btn-primary" onclick="alert('✅ Sozlamalar saqlandi!')">Saqlash</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">👤 Foydalanuvchi profili</div></div>
+            <div class="form-group"><label class="form-label">To'liq ism</label><input class="form-control" value="Dr. Alisher Karimov"></div>
+            <div class="form-group"><label class="form-label">Lavozim</label><input class="form-control" value="Bosh shifokor / Admin"></div>
+            <div class="form-group"><label class="form-label">Parolni o'zgartirish</label><input class="form-control" type="password" placeholder="Yangi parol..."></div>
+            <button class="btn btn-primary" onclick="alert('✅ Profil yangilandi!')">Yangilash</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="add-patient-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">➕ Yangi bemor qo'shish</div><button class="modal-close" onclick="closeModal('add-patient-modal')">×</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">Familiya *</label><input class="form-control" id="p-last" placeholder="Karimov"></div>
+      <div class="form-group"><label class="form-label">Ism *</label><input class="form-control" id="p-first" placeholder="Sarvar"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">Tug'ilgan sana</label><input class="form-control" type="date" id="p-dob"></div>
+      <div class="form-group"><label class="form-label">Jinsi</label><select class="form-control" id="p-gender"><option value="Erkak">Erkak</option><option value="Ayol">Ayol</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Telefon raqami *</label><input class="form-control" id="p-phone" placeholder="+998 90 123 45 67"></div>
+    <div class="form-group"><label class="form-label">Manzil</label><input class="form-control" id="p-address" placeholder="Viloyat, shahar, ko'cha..."></div>
+    <div class="form-group"><label class="form-label">Dastlabki shikoyat</label><input class="form-control" id="p-complaint" placeholder="Bemor nima deb shikoyat qilmoqda..."></div>
+    <div class="form-group"><label class="form-label">Dastlabki diagnoz</label><input class="form-control" id="p-diag" placeholder="Masalan: Gipertenziya, Diabet..."></div>
+    <div class="form-group"><label class="form-label">Mas'ul shifokor</label>
+      <select class="form-control" id="p-doc">
+        <option>Dr. Karimov (Terapevt)</option><option>Dr. Nazarov (Kardiolog)</option>
+        <option>Dr. Yusupova (Nevropatolog)</option><option>Dr. Mirzaev (Jarroh)</option>
+        <option>Dr. Nazarova (Ginekolog)</option><option>Dr. Toshev (Pediatr)</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Qo'shimcha izoh</label><textarea class="form-control" id="p-note" rows="2" placeholder="Allergiya, surunkali kasalliklar..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-patient-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="addPatient()">✅ Saqlash</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="add-appt-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📅 Yangi qabul rejalashtirish</div><button class="modal-close" onclick="closeModal('add-appt-modal')">×</button></div>
+    <div class="form-group"><label class="form-label">Bemor *</label>
+      <select class="form-control" id="appt-patient">
+        <option>Sarvar Karimov (B-001)</option><option>Malika Rashidova (B-002)</option>
+        <option>Jahongir Normatov (B-003)</option><option>Zulfiya Usmonova (B-004)</option>
+        <option>Akbar Toshmatov (B-005)</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">Sana *</label><input class="form-control" type="date" id="appt-date"></div>
+      <div class="form-group"><label class="form-label">Vaqt *</label><input class="form-control" type="time" id="appt-time" value="09:00"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Shifokor *</label>
+      <select class="form-control" id="appt-doc">
+        <option>Dr. Karimov (Terapevt)</option><option>Dr. Nazarov (Kardiolog)</option>
+        <option>Dr. Yusupova (Nevropatolog)</option><option>Dr. Mirzaev (Jarroh)</option>
+        <option>Dr. Nazarova (Ginekolog)</option><option>Dr. Toshev (Pediatr)</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Xizmat turi *</label>
+      <select class="form-control" id="appt-type">
+        <option>Dastlabki konsultatsiya</option><option>Takroriy konsultatsiya</option>
+        <option>Tekshiruv (USI)</option><option>Qon tahlili</option><option>Siydik tahlili</option>
+        <option>EKG</option><option>MRI / KT</option><option>Rentgen</option>
+        <option>Jarrohlik konsultatsiyasi</option><option>Protsedura</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Izoh</label><textarea class="form-control" id="appt-note" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-appt-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="addAppointment()">✅ Saqlash</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="patient-detail-modal">
+  <div class="modal" style="width:560px">
+    <div class="modal-header"><div class="modal-title" id="detail-name">Bemor profili</div><button class="modal-close" onclick="closeModal('patient-detail-modal')">×</button></div>
+    <div id="patient-detail-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('patient-detail-modal')">Yopish</button>
+      <button class="btn btn-primary" onclick="alert('Tahrirlash rejimi (keyingi versiyada)')">✏️ Tahrirlash</button>
+    </div>
+  </div>
+</div>
+<script>
+let patients = [
+  { id:'B-001', last:'Karimov',   first:'Sarvar',    dob:'1985-03-12', gender:'Erkak', phone:'+998901234567', address:'Toshkent, Chilonzor',    diag:'Gipertenziya',    doctor:'Dr. Karimov',  status:'Faol',       last_visit:'2024-01-15', note:"Aspirin allergiyasi bor" },
+  { id:'B-002', last:'Rashidova', first:'Malika',    dob:'1990-07-24', gender:'Ayol',  phone:'+998991234567', address:'Toshkent, Yunusobod',    diag:'Yurak kasalligi', doctor:'Dr. Nazarov',  status:'Davolash',   last_visit:'2024-01-14', note:'' },
+  { id:'B-003', last:'Normatov',  first:'Jahongir',  dob:'1975-11-08', gender:'Erkak', phone:'+998931234567', address:'Samarqand',              diag:'Migren',          doctor:'Dr. Yusupova', status:'Faol',       last_visit:'2024-01-13', note:"Uzoqdan kelgan bemor" },
+  { id:'B-004', last:'Usmonova',  first:'Zulfiya',   dob:'1995-05-30', gender:'Ayol',  phone:'+998711234567', address:'Toshkent, Mirzo Ulug',   diag:'Kamqonlik',       doctor:'Dr. Karimov',  status:'Davolangan', last_visit:'2024-01-10', note:'' },
+  { id:'B-005', last:'Toshmatov', first:'Akbar',     dob:'1968-09-17', gender:'Erkak', phone:'+998951234567', address:'Toshkent, Shayxontohur', diag:'II tur diabet',   doctor:'Dr. Mirzaev',  status:'Faol',       last_visit:'2024-01-09', note:"Insulin davosi" },
+  { id:'B-006', last:'Qodirov',   first:'Bobur',     dob:'2001-02-14', gender:'Erkak', phone:'+998901111111', address:"Farg'ona",               diag:'Bronxit',         doctor:'Dr. Karimov',  status:'Faol',       last_visit:'2024-01-08', note:'' },
+  { id:'B-007', last:'Mirzayeva', first:'Nodira',    dob:'1983-06-22', gender:'Ayol',  phone:'+998902222222', address:'Toshkent, Uchtepa',      diag:'Artroz',          doctor:'Dr. Yusupova', status:'Davolash',   last_visit:'2024-01-07', note:'' },
+  { id:'B-008', last:'Holmatov',  first:"Ulug'bek",  dob:'1972-12-05', gender:'Erkak', phone:'+998903333333', address:'Namangan',               diag:'Stenokardiya',    doctor:'Dr. Nazarov',  status:'Faol',       last_visit:'2024-01-06', note:"Stentlash rejalashtirilgan" },
+];
+let appointments = [
+  { time:'09:00', patient:'Sarvar Karimov',    doctor:'Dr. Karimov',  type:'Qon tahlili',      status:'Keldi' },
+  { time:'10:30', patient:'Malika Rashidova',  doctor:'Dr. Nazarov',  type:'Tekshiruv (EKG)',  status:'Kutmoqda' },
+  { time:'11:00', patient:'Bobur Qodirov',     doctor:'Dr. Karimov',  type:'Takroriy qabul',   status:'Kutmoqda' },
+  { time:'12:00', patient:'Jahongir Normatov', doctor:'Dr. Yusupova', type:'MRI',              status:'Rejalashtirilgan' },
+  { time:'13:30', patient:'Nodira Mirzayeva',  doctor:'Dr. Yusupova', type:'Konsultatsiya',    status:'Rejalashtirilgan' },
+  { time:'14:00', patient:'Zulfiya Usmonova',  doctor:'Dr. Karimov',  type:'Konsultatsiya',    status:'Rejalashtirilgan' },
+  { time:'15:00', patient:"Ulug'bek Holmatov", doctor:'Dr. Nazarov',  type:'Rentgen',          status:'Rejalashtirilgan' },
+  { time:'15:30', patient:'Akbar Toshmatov',   doctor:'Dr. Mirzaev',  type:'Jarrohlik konsult',status:'Kutmoqda' },
+];
+const doctors = [
+  { name:'Dr. Alisher Karimov',  spec:'Terapevt',     exp:'15 yil', patients:142, rating:4.9, load:85, color:'var(--accent)' },
+  { name:'Dr. Bobur Nazarov',    spec:'Kardiolog',    exp:'12 yil', patients:98,  rating:4.8, load:60, color:'var(--green)' },
+  { name:'Dr. Nilufar Yusupova', spec:'Nevropatolog', exp:'10 yil', patients:87,  rating:4.7, load:92, color:'var(--purple)' },
+  { name:'Dr. Jasur Mirzaev',    spec:'Jarroh',       exp:'18 yil', patients:64,  rating:4.9, load:45, color:'var(--amber)' },
+  { name:'Dr. Sabohat Nazarova', spec:'Ginekolog',    exp:'8 yil',  patients:115, rating:4.6, load:70, color:'var(--teal)' },
+  { name:"Dr. Ulug'bek Toshev",  spec:'Pediatr',      exp:'6 yil',  patients:201, rating:4.8, load:55, color:'var(--red)' },
+];
+const billing = [
+  { id:'T-1024', patient:'Sarvar Karimov',    service:'Konsultatsiya', amount:'150,000',   date:'06.01.2024', type:'Naqd',   status:"To'langan" },
+  { id:'T-1023', patient:'Malika Rashidova',  service:'EKG',           amount:'80,000',    date:'05.01.2024', type:'Karta',  status:"To'langan" },
+  { id:'T-1022', patient:'Jahongir Normatov', service:'MRI',           amount:'850,000',   date:'05.01.2024', type:'Naqd',   status:'Kutilmoqda' },
+  { id:'T-1021', patient:'Zulfiya Usmonova',  service:'Qon tahlili',   amount:'120,000',   date:'04.01.2024', type:'Online', status:"To'langan" },
+  { id:'T-1020', patient:'Akbar Toshmatov',   service:'Jarrohlik',     amount:'2,500,000', date:'03.01.2024', type:'Karta',  status:"Muddati o'tdi" },
+  { id:'T-1019', patient:'Bobur Qodirov',     service:'Rentgen',       amount:'200,000',   date:'03.01.2024', type:'Online', status:"To'langan" },
+  { id:'T-1018', patient:'Nodira Mirzayeva',  service:'USI',           amount:'180,000',   date:'02.01.2024', type:'Naqd',   status:'Kutilmoqda' },
+  { id:'T-1017', patient:"Ulug'bek Holmatov", service:'KT',            amount:'650,000',   date:'01.01.2024', type:'Karta',  status:"To'langan" },
+];
+const inventory = [
+  { name:'Amoxicillin 500mg',  cat:'Antibiotik',        qty:12,  min:50,  unit:'dona', exp:'2025-06', crit:true },
+  { name:'Metformin 1000mg',   cat:'Diabet dori',       qty:250, min:100, unit:'dona', exp:'2025-12', crit:false },
+  { name:'Amlodipine 5mg',     cat:'Gipertenziya',      qty:180, min:80,  unit:'dona', exp:'2026-03', crit:false },
+  { name:'Omeprazole 20mg',    cat:'Gastroenterologiya',qty:320, min:100, unit:'dona', exp:'2025-08', crit:false },
+  { name:'Ibuprofen 400mg',    cat:"Og'riq qoldiruvchi",qty:8,   min:50,  unit:'dona', exp:'2025-11', crit:true },
+  { name:'Vitamin D3 1000IU',  cat:'Vitaminlar',        qty:450, min:100, unit:'dona', exp:'2026-01', crit:false },
+  { name:'NaCl 0.9% 500ml',    cat:'Infuzion eritma',   qty:85,  min:30,  unit:'qop',  exp:'2025-09', crit:false },
+  { name:'Paracetamol 500mg',  cat:"Og'riq qoldiruvchi",qty:28,  min:50,  unit:'dona', exp:'2025-10', crit:true },
+  { name:'Warfarin 5mg',       cat:'Antikoagulyant',    qty:160, min:40,  unit:'dona', exp:'2025-07', crit:false },
+  { name:'Atorvastatin 20mg',  cat:'Xolesterin',        qty:210, min:80,  unit:'dona', exp:'2026-02', crit:false },
+];
+const pageTitles = { dashboard:'Boshqaruv paneli', patients:'Bemorlar', appointments:'Qabullar', doctors:'Shifokorlar', billing:"To'lovlar", reports:'Hisobotlar', inventory:'Dori-darmon', settings:'Sozlamalar' };
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name];
+  if (el) { el.classList.add('active'); } else {
+    document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+name+"'")) n.classList.add('active'); });
+  }
+  renderPage(name);
+}
+function renderPage(name) {
+  const map = { dashboard:renderDashboard, patients:renderPatients, appointments:renderAppointments, doctors:renderDoctors, billing:renderBilling, reports:renderReports, inventory:renderInventory };
+  if (map[name]) map[name]();
+}
+function getAge(dob) { if (!dob) return '—'; return new Date().getFullYear() - new Date(dob).getFullYear(); }
+function initials(name) { return name.split(' ').map(x => x[0]).join('').substring(0,2).toUpperCase(); }
+function statusBadge(s) {
+  const map = { "Faol":"badge-green","Davolangan":"badge-blue","Davolash":"badge-amber","Keldi":"badge-green","Kutmoqda":"badge-amber","Rejalashtirilgan":"badge-blue","To'langan":"badge-green","Kutilmoqda":"badge-amber","Muddati o'tdi":"badge-red" };
+  return '<span class="badge '+(map[s]||'badge-blue')+'">'+s+'</span>';
+}
+const avatarColors = ['rgba(59,130,246,0.2);color:var(--accent)','rgba(168,85,247,0.2);color:var(--purple)','rgba(20,184,166,0.2);color:var(--teal)','rgba(245,158,11,0.2);color:var(--amber)','rgba(239,68,68,0.2);color:var(--red)','rgba(34,197,94,0.2);color:var(--green)'];
+function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
+function renderDashboard() {
+  const ts = document.getElementById('today-schedule');
+  if (ts) ts.innerHTML = appointments.slice(0,5).map((a,i) => '<div class="schedule-slot"><div class="slot-time">'+a.time+'</div><div class="patient-avatar" style="background:'+avatarColor(i)+'">'+initials(a.patient)+'</div><div style="flex:1"><div class="slot-name">'+a.patient+'</div><div class="slot-type">'+a.doctor+' · '+a.type+'</div></div>'+statusBadge(a.status)+'</div>').join('');
+  const dl = document.getElementById('doc-load');
+  if (dl) dl.innerHTML = doctors.slice(0,4).map(d => '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">'+d.name+' <span style="color:var(--text3)">('+d.spec+')</span></span><span style="color:'+(d.load>80?'var(--red)':d.load>60?'var(--amber)':'var(--green)')+';font-weight:600">'+d.load+'%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:'+d.load+'%;background:'+(d.load>80?'var(--red)':d.load>60?'var(--amber)':'var(--green)')+'"></div></div></div>').join('');
+  const rp = document.getElementById('recent-patients');
+  if (rp) rp.innerHTML = patients.slice(0,5).map((p,i) => '<tr><td style="color:var(--text3);font-size:11px">'+p.id+'</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:'+avatarColor(i)+'">'+initials(p.last+' '+p.first)+'</div><span style="color:var(--text)">'+p.last+' '+p.first+'</span></div></td><td style="color:var(--text3)">'+getAge(p.dob)+'</td><td>'+p.diag+'</td><td style="color:var(--accent)">'+p.doctor+'</td><td style="color:var(--text3)">'+p.last_visit+'</td><td>'+statusBadge(p.status)+'</td></tr>').join('');
+  document.getElementById('stat-patients').textContent = (1284 + patients.length - 8).toLocaleString();
+}
+function renderPatients(list) {
+  const data = list || patients;
+  document.getElementById('patient-count').textContent = data.length;
+  const tb = document.getElementById('patients-table');
+  if (!tb) return;
+  tb.innerHTML = data.length === 0 ? '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Hech qanday bemor topilmadi</td></tr>' : data.map((p,i) => '<tr><td style="color:var(--text3);font-size:11px">'+p.id+'</td><td><div style="display:flex;align-items:center;gap:8px"><div class="patient-avatar" style="width:30px;height:30px;font-size:11px;background:'+avatarColor(i)+'">'+initials(p.last+' '+p.first)+'</div><span style="color:var(--text)">'+p.last+' '+p.first+'</span></div></td><td style="color:var(--text3)">'+p.dob+'</td><td style="color:var(--text3)">'+getAge(p.dob)+'</td><td>'+p.phone+'</td><td>'+p.diag+'</td><td style="color:var(--accent)">'+p.doctor+'</td><td>'+statusBadge(p.status)+'</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="viewPatient('+i+')">👁 Ko\'rish</button><button class="btn btn-danger btn-sm" onclick="deletePatient('+i+')">🗑</button></div></td></tr>').join('');
+}
+function filterPatients() {
+  const q = (document.getElementById('patient-search').value||'').toLowerCase();
+  const doc = document.getElementById('filter-doctor').value;
+  const status = document.getElementById('filter-status').value;
+  renderPatients(patients.filter(p => {
+    const name = (p.last+' '+p.first).toLowerCase();
+    return (!q || name.includes(q) || p.phone.includes(q) || p.id.toLowerCase().includes(q) || p.diag.toLowerCase().includes(q)) && (!doc || p.doctor===doc) && (!status || p.status===status);
+  }));
+}
+function viewPatient(idx) {
+  const p = patients[idx]; if (!p) return;
+  document.getElementById('detail-name').textContent = p.last+' '+p.first;
+  document.getElementById('patient-detail-content').innerHTML = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px"><div class="patient-avatar" style="width:56px;height:56px;font-size:18px;background:'+avatarColor(idx)+'">'+initials(p.last+' '+p.first)+'</div><div><div style="font-size:18px;font-weight:600">'+p.last+' '+p.first+'</div><div style="font-size:13px;color:var(--text3);margin-top:4px">'+p.id+' · '+getAge(p.dob)+' yosh · '+p.gender+'</div><div style="margin-top:8px">'+statusBadge(p.status)+'</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><div style="color:var(--text3);margin-bottom:2px">Telefon</div><div style="color:var(--text)">'+p.phone+'</div></div><div><div style="color:var(--text3);margin-bottom:2px">Manzil</div><div style="color:var(--text)">'+(p.address||'—')+'</div></div><div><div style="color:var(--text3);margin-bottom:2px">Tug\'ilgan sana</div><div style="color:var(--text)">'+(p.dob||'—')+'</div></div><div><div style="color:var(--text3);margin-bottom:2px">Oxirgi tashrif</div><div style="color:var(--text)">'+(p.last_visit||'—')+'</div></div><div><div style="color:var(--text3);margin-bottom:2px">Diagnoz</div><div style="color:var(--amber);font-weight:500">'+p.diag+'</div></div><div><div style="color:var(--text3);margin-bottom:2px">Mas\'ul shifokor</div><div style="color:var(--accent)">'+p.doctor+'</div></div></div>'+(p.note?'<div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:#fcd34d">📋 Izoh: '+p.note+'</div>':'');
+  openModal('patient-detail-modal');
+}
+function deletePatient(idx) {
+  const p = patients[idx];
+  if (confirm(p.last+' '+p.first+" ni o'chirishni tasdiqlaysizmi?\nBu amalni qaytarib bo'lmaydi!")) { patients.splice(idx,1); renderPatients(); alert("✅ Bemor ro'yxatdan o'chirildi."); }
+}
+let currentApptFilter = 'today';
+function filterAppts(filter, el) {
+  currentApptFilter = filter;
+  document.querySelectorAll('#page-appointments .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderAppointments();
+}
+function renderAppointments(list) {
+  const data = list || appointments;
+  const tb = document.getElementById('appt-table');
+  if (!tb) return;
+  tb.innerHTML = data.map((a,i) => '<tr><td style="color:var(--accent);font-weight:700">'+a.time+'</td><td style="color:var(--text)">'+a.patient+'</td><td>'+a.doctor+'</td><td>'+a.type+'</td><td>'+statusBadge(a.status)+'</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="changeApptStatus('+i+')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt('+i+')" title="O\'chirish">🗑</button></div></td></tr>').join('');
+}
+function changeApptStatus(i) {
+  const statuses = ['Rejalashtirilgan','Kutmoqda','Keldi'];
+  const cur = statuses.indexOf(appointments[i].status);
+  appointments[i].status = statuses[(cur+1)%statuses.length];
+  renderAppointments();
+}
+function deleteAppt(i) { if (confirm("Bu qabulni o'chirishni tasdiqlaysizmi?")) { appointments.splice(i,1); renderAppointments(); } }
+function renderDoctors() {
+  const g = document.getElementById('doctors-grid');
+  if (!g) return;
+  g.innerHTML = doctors.map((d,i) => '<div class="card" style="transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:'+avatarColor(i)+'">'+initials(d.name)+'</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">'+d.name+'</div><div style="font-size:12px;color:var(--text3);margin-top:2px">'+d.spec+'</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">'+d.exp+'</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ '+d.rating+'</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:'+(d.load>80?'var(--red)':d.load>60?'var(--amber)':'var(--green)')+';font-weight:600">'+d.load+'%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:'+d.load+'%;background:'+(d.load>80?'var(--red)':d.load>60?'var(--amber)':'var(--green)')+'"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">'+d.patients+' ta bemor</span><span class="badge badge-green">Faol</span></div></div>').join('');
+}
+function renderBilling() {
+  const tb = document.getElementById('billing-table');
+  if (!tb) return;
+  tb.innerHTML = billing.map(b => '<tr><td style="color:var(--text3);font-size:11px">'+b.id+'</td><td style="color:var(--text)">'+b.patient+'</td><td>'+b.service+'</td><td style="font-weight:700;color:var(--green)">'+b.amount+" so'm"+'</td><td style="color:var(--text3)">'+b.date+'</td><td><span class="badge badge-blue">'+b.type+'</span></td><td>'+statusBadge(b.status)+'</td><td><button class="btn btn-outline btn-sm" onclick="alert(\'Chek: '+b.id+'\')">🧾 Chek</button></td></tr>').join('');
+}
+function renderReports() {
+  const dc = document.getElementById('diag-chart'); if (!dc) return;
+  const data = [{name:'Gipertenziya',val:28,color:'var(--accent)'},{name:'II tur diabet',val:19,color:'var(--amber)'},{name:'Yurak kasalligi',val:15,color:'var(--red)'},{name:'Migren',val:12,color:'var(--purple)'},{name:'Artroz',val:8,color:'var(--teal)'},{name:'Boshqalar',val:18,color:'var(--text3)'}];
+  dc.innerHTML = data.map(d => '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">'+d.name+'</span><span style="color:var(--text);font-weight:600">'+d.val+'%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:'+d.val+'%;background:'+d.color+'"></div></div></div>').join('');
+}
+function renderInventory() {
+  const il = document.getElementById('inventory-list'); if (!il) return;
+  il.innerHTML = inventory.map(item => { const pct = Math.min(Math.round((item.qty/(item.min*3))*100),100); const low = item.qty < item.min; const warn = !low && item.qty < item.min*1.5; const barColor = low?'var(--red)':warn?'var(--amber)':'var(--green)'; return '<div class="inventory-row"><div style="font-size:20px;width:24px;text-align:center">'+(low?'⚠️':'💊')+'</div><div class="inv-name"><div style="font-size:13px;font-weight:500;color:var(--text)">'+item.name+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+item.cat+' · Muddati: '+item.exp+'</div></div><div class="inv-qty" style="color:'+(low?'var(--red)':warn?'var(--amber)':'var(--text)')+'">'+item.qty+' <span style="font-size:11px;color:var(--text3)">'+item.unit+'</span></div><div style="width:140px"><div class="mini-bar"><div class="mini-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">Min zaxira: '+item.min+' '+item.unit+'</div></div><div style="min-width:90px;text-align:right"><span class="badge '+(low?'badge-red':warn?'badge-amber':'badge-green')+'">'+(low?'Kam!':warn?'Ogohlantirish':'Yetarli')+'</span></div></div>'; }).join('');
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', function(e) { if (e.target===this) this.classList.remove('open'); }); });
+function addPatient() {
+  const last=(document.getElementById('p-last').value||'').trim(), first=(document.getElementById('p-first').value||'').trim(), phone=(document.getElementById('p-phone').value||'').trim();
+  if (!last||!first) { alert('⚠️ Familiya va ism majburiy!'); return; }
+  if (!phone) { alert('⚠️ Telefon raqami majburiy!'); return; }
+  const newP = { id:'B-'+String(patients.length+1).padStart(3,'0'), last, first, dob:document.getElementById('p-dob').value||'', gender:document.getElementById('p-gender').value, phone, address:document.getElementById('p-address').value||'', diag:document.getElementById('p-diag').value||'Tekshirilmoqda', doctor:document.getElementById('p-doc').value, note:document.getElementById('p-note').value||'', status:'Faol', last_visit:new Date().toISOString().split('T')[0] };
+  patients.unshift(newP);
+  closeModal('add-patient-modal');
+  ['p-last','p-first','p-dob','p-phone','p-address','p-complaint','p-diag','p-note'].forEach(id => { document.getElementById(id).value=''; });
+  renderPatients();
+  document.getElementById('stat-patients').textContent = (1284+patients.length-8).toLocaleString();
+  alert('✅ '+newP.last+' '+newP.first+" muvaffaqiyatli ro'yxatga qo'shildi!");
+}
+function addAppointment() {
+  const patient=document.getElementById('appt-patient').value, date=document.getElementById('appt-date').value, time=document.getElementById('appt-time').value;
+  if (!date) { alert('⚠️ Sana majburiy!'); return; }
+  appointments.push({ time, patient:patient.split('(')[0].trim(), doctor:document.getElementById('appt-doc').value, type:document.getElementById('appt-type').value, status:'Rejalashtirilgan' });
+  closeModal('add-appt-modal');
+  document.getElementById('appt-date').value='';
+  renderAppointments(); renderDashboard();
+  alert('✅ Qabul '+date+' sanaga '+time+' uchun muvaffaqiyatli rejalashtirildi!');
+}
+function globalSearch(q) {
+  if (!q||q.length<2) return;
+  const lq=q.toLowerCase();
+  const found=patients.filter(p=>(p.last+' '+p.first).toLowerCase().includes(lq)||p.phone.includes(lq)||p.id.toLowerCase().includes(lq)||p.diag.toLowerCase().includes(lq));
+  if (found.length) { showPage('patients',null); document.getElementById('patient-search').value=q; renderPatients(found); }
+}
+function showNotifications() { alert('📬 Bildirishnomalar:\n\n⚠️ Amoxicillin zaxirasi tugayapti\n⚠️ Ibuprofen zaxirasi kamaydi\n💳 Akbar Toshmatov to\'lovi muddati o\'tdi\n📋 5 ta tahlil natijasi kutilmoqda\n📅 Ertaga 3 ta jarrohlik rejalashtirilgan'); }
+renderDashboard();
+</script>
+</body>
+</html>
