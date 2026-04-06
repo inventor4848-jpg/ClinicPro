@@ -772,14 +772,14 @@
           <div class="stat-card">
             <div class="stat-icon">💰</div>
             <div class="stat-label">Oylik daromad</div>
-            <div class="stat-value" style="color:var(--amber)">42.5M</div>
-            <div class="stat-change up">↑ 8.3% o'sish</div>
+            <div class="stat-value" style="color:var(--amber)" id="stat-income">0</div>
+            <div class="stat-change up" id="stat-income-change">↑ 0% o'sish</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">💊</div>
-            <div class="stat-label">Kam zaxiradagi dorlar</div>
-            <div class="stat-value" style="color:var(--red)">3</div>
-            <div class="stat-change down">↓ Zaxira to'ldiring!</div>
+            <div class="stat-label">Kam zahiradagi dorilar</div>
+            <div class="stat-value" style="color:var(--red)" id="stat-low-stock">0</div>
+            <div class="stat-change down" id="stat-low-stock-alert">Zaxira to'ldiring!</div>
           </div>
         </div>
         <div class="grid-3">
@@ -800,11 +800,10 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">⚠️ Ogohlantirishlar</div>
+                <button id="add-notif-btn" class="btn btn-outline btn-sm" style="display:none"
+                  onclick="openModal('add-notif-modal')">+ Yangi</button>
               </div>
-              <div class="alert alert-red">💊 Amoxicillin zaxirasi tugayapti (12 dona qoldi)</div>
-              <div class="alert alert-amber">📋 5 ta tahlil natijasi kutilmoqda</div>
-              <div class="alert alert-red">💳 2 ta to'lov muddati o'tdi</div>
-              <div class="alert alert-amber">🏥 Ertaga 3 ta jarrohlik rejalashtirilgan</div>
+              <div id="dashboard-notifications"></div>
             </div>
           </div>
         </div>
@@ -1294,6 +1293,32 @@
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="add-notif-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔔 Yangi ogohlantirish</div>
+        <button class="modal-close" onclick="closeModal('add-notif-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Xabar matni *</label>
+        <textarea class="form-control" id="notif-message"
+          placeholder="Masalan: Dori-darmon zaxirasi kamaymoqda..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Turi</label>
+        <select class="form-control" id="notif-type">
+          <option value="info">Ma'lumot (Ko'k)</option>
+          <option value="warning">Ogohlantirish (Sariq)</option>
+          <option value="error">Hatar (Qizil)</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-notif-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addNotification()">✅ Saqlash</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ─── AUTH GUARD ────────────────────────────────────────────
     const currentRole = sessionStorage.getItem('cp_role');
@@ -1351,6 +1376,7 @@
     let doctors = [];
     let billing = [];
     let inventory = [];
+    let notifications = [];
 
     async function loadData() {
       try {
@@ -1362,12 +1388,19 @@
         if (dRes.ok) doctors = await dRes.json();
         if (bRes.ok) billing = await bRes.json();
         if (iRes.ok) inventory = await iRes.json();
+        const nRes = await fetch('/api/notifications');
+        if (nRes.ok) notifications = await nRes.json();
+
         if (sRes.ok) {
           const stats = await sRes.json();
           const sp = document.getElementById('stat-patients');
           if (sp) sp.textContent = stats.totalPatients.toLocaleString();
           const sa = document.getElementById('stat-appts');
           if (sa) sa.textContent = stats.todayAppointments.toLocaleString();
+          const si = document.getElementById('stat-income');
+          if (si) si.textContent = stats.monthlyIncome.toLocaleString();
+          const sl = document.getElementById('stat-low-stock');
+          if (sl) sl.textContent = stats.lowStock;
         }
       } catch (e) { console.error('Error fetching data:', e); }
       const activePage = document.querySelector('.page.active');
@@ -1400,8 +1433,29 @@
     function renderDashboard() {
       const ts = document.getElementById('today-schedule');
       if (ts) ts.innerHTML = appointments.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.appointment_time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient_name || '') + '</div><div style="flex:1"><div class="slot-name">' + a.patient_name + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
+
       const dl = document.getElementById('doc-load');
-      if (dl) dl.innerHTML = doctors.slice(0, 4).map(d => '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">' + d.name + ' <span style="color:var(--text3)">(' + d.spec + ')</span></span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div>').join('');
+      if (dl) {
+        dl.innerHTML = doctors.slice(0, 4).map(d => {
+          // Calculate dynamic load: # of today's appointments for this doctor / 10 max
+          const count = appointments.filter(a => a.doctor.includes(d.name.split(' ').pop())).length;
+          const loadPct = Math.min(100, Math.round((count / 10) * 100));
+          return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">' + d.name + ' <span style="color:var(--text3)">(' + d.spec + ')</span></span><span style="color:' + (loadPct > 80 ? 'var(--red)' : loadPct > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + loadPct + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + loadPct + '%;background:' + (loadPct > 80 ? 'var(--red)' : loadPct > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div>';
+        }).join('');
+      }
+
+      const dn = document.getElementById('dashboard-notifications');
+      if (dn) {
+        dn.innerHTML = notifications.length === 0 ? '<div style="text-align:center;padding:10px;color:var(--text3);font-size:12px">Hozircha ogohlantirishlar yo\'q</div>' :
+          notifications.map(n => {
+            const colorClass = n.type === 'error' ? 'alert-red' : n.type === 'warning' ? 'alert-amber' : 'alert-blue';
+            return '<div class="alert ' + colorClass + '">' + n.message + '</div>';
+          }).join('');
+      }
+
+      const notifBtn = document.getElementById('add-notif-btn');
+      if (notifBtn) notifBtn.style.display = (currentRole === 'registrar' || currentRole === 'admin') ? 'block' : 'none';
+
       const rp = document.getElementById('recent-patients');
       if (rp) rp.innerHTML = patients.slice(0, 5).map((p, i) => {
         const last = p.last_name || p.last || '';
@@ -1668,6 +1722,21 @@
         document.getElementById('inv-name').value = '';
         document.getElementById('inv-qty').value = '';
         document.getElementById('inv-cat').value = '';
+      });
+    }
+
+    function addNotification() {
+      const message = document.getElementById('notif-message').value;
+      const type = document.getElementById('notif-type').value;
+      if (!message) { alert('⚠️ Xabar matnini kiriting!'); return; }
+      fetch('/api/notifications', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, type })
+      }).then(() => {
+        loadData();
+        closeModal('add-notif-modal');
+        alert('✅ Ogohlantirish saqlandi!');
+        document.getElementById('notif-message').value = '';
       });
     }
 

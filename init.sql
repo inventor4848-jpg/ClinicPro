@@ -64,6 +64,13 @@ CREATE TABLE IF NOT EXISTS finance (
   status VARCHAR(20)
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  message TEXT NOT NULL,
+  type VARCHAR(20) DEFAULT 'info', -- 'info', 'warning', 'error'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Boshlang'ich datalarni kiritish (faqat test uchun)
 INSERT INTO inventory (name, category, qty, min_qty, unit, exp_date, crit) VALUES
 ('Amoxicillin 500mg', 'Antibiotik', 12, 50, 'dona', '2025-06', TRUE),
@@ -76,4 +83,11 @@ INSERT INTO users (username, password, role) VALUES
 ('sh123123*', 'sh123123*', 'doctor'),
 ('r123123*', 'r123123*', 'registrar')
 ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO notifications (message, type) VALUES
+('Amoxicillin zahirasi tugayapti (12 dona qoldi)', 'warning'),
+('5 ta tahlil natijasi kutilmoqda', 'info'),
+('2 ta to\'lov muddati o\'tdi', 'error'),
+('Ertaga 3 ta jarrohlik rejalashtirilgan', 'info')
+ON CONFLICT DO NOTHING;
 

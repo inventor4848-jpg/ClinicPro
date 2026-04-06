@@ -221,11 +221,14 @@ app.get('/api/stats', async (req, res) => {
         const totalPatients = parseInt(patientsRes.rows[0].count, 10);
         const todayAppointments = parseInt(appointmentsRes.rows[0].count, 10);
 
-        // Monthly income dummy query
-        const financeRes = await db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM finance`);
-        const monthlyIncome = financeRes.rows[0].total;
+        // Monthly income: sum of paid amounts this month
+        const incomeRes = await db.query(`
+          SELECT COALESCE(SUM(amount), 0) as total FROM finance 
+          WHERE status = 'To''langan' AND date >= DATE_TRUNC('month', CURRENT_DATE)
+        `);
+        const monthlyIncome = incomeRes.rows[0].total;
 
-        // Inventory alerts
+        // Inventory alerts: count items below min_qty
         const lowStockRes = await db.query('SELECT COUNT(*) FROM inventory WHERE qty < min_qty');
         const lowStock = parseInt(lowStockRes.rows[0].count, 10);
 
@@ -235,6 +238,38 @@ app.get('/api/stats', async (req, res) => {
             monthlyIncome,
             lowStock
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Notifications API
+app.get('/api/notifications', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/notifications', async (req, res) => {
+    const { message, type } = req.body;
+    try {
+        const { rows } = await db.query(
+            'INSERT INTO notifications (message, type) VALUES ($1, $2) RETURNING *',
+            [message, type || 'info']
+        );
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/notifications/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM notifications WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
