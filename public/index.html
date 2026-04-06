@@ -942,7 +942,7 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">To'lov operatsiyalari</div><button class="btn btn-primary btn-sm"
-              onclick="openModal('add-finance-modal')">+ Yangi to'lov</button>
+              onclick="openFinanceModal()">+ Yangi to'lov</button>
           </div>
           <div style="overflow-x:auto">
             <table>
@@ -1251,7 +1251,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Bemor</label>
-        <input class="form-control" id="fin-patient" placeholder="Bemor ismi...">
+        <select class="form-control" id="fin-patient"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Xizmat</label>
@@ -1496,6 +1496,17 @@
     function openModal(id) { document.getElementById(id).classList.add('open'); }
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
     document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); }); });
+
+    function openFinanceModal() {
+      const select = document.getElementById('fin-patient');
+      if (appointments.length === 0) {
+        select.innerHTML = '<option value="">Hech qanday qabul (bemor) yo\'q</option>';
+      } else {
+        select.innerHTML = appointments.map(a => `<option value="${a.patient_name}">${a.patient_name} (${a.type} | ${a.appointment_time})</option>`).join('');
+      }
+      openModal('add-finance-modal');
+    }
+
     function addPatient() {
       const last = (document.getElementById('p-last').value || '').trim(), first = (document.getElementById('p-first').value || '').trim(), phone = (document.getElementById('p-phone').value || '').trim();
       if (!last || !first) { alert('⚠️ Familiya va ism majburiy!'); return; }
