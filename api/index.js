@@ -296,6 +296,36 @@ app.post('/api/orders/:id/receive', async (req, res) => {
     }
 });
 
+app.delete('/api/orders/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const orderRes = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
+        if (orderRes.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+        const order = orderRes.rows[0];
+
+        if (order.status === 'Qabul qilindi') {
+            // 1. Reverse inventory increase
+            if (order.inventory_id) {
+                await db.query('UPDATE inventory SET qty = qty - $1 WHERE id = $2', [order.qty, order.inventory_id]);
+            }
+            // 2. Remove associated expense from finance
+            await db.query(`
+                DELETE FROM finance 
+                WHERE patient_name = 'Omborxona' 
+                AND service = $1 
+                AND amount = $2 
+                AND category = 'Chiqim'
+            `, ['Dori xaridi: ' + order.drug_name, order.total_price]);
+        }
+
+        // 3. Delete the order
+        await db.query('DELETE FROM orders WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/finance', async (req, res) => {
     const { id, patient_name, service, amount, date, type, status, category } = req.body;
     try {

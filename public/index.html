@@ -2201,13 +2201,17 @@
         const statusClass = o.status === 'Kutilmoqda' ? 'badge-amber' : 'badge-green';
         const action = o.status === 'Kutilmoqda' ?
           `<button class="btn btn-primary btn-sm" onclick="receiveOrder(${o.id})">Qabul qilish</button>` : '—';
+
+        const deleteBtn = currentRole === 'admin' ?
+          `<button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="deleteOrder(${o.id})">🗑</button>` : '';
+
         return `<tr>
           <td>${o.drug_name}</td>
           <td>${o.supplier_name || '—'}</td>
           <td>${o.qty}</td>
           <td>${parseFloat(o.total_price).toLocaleString()} so'm</td>
           <td><span class="badge ${statusClass}">${o.status}</span></td>
-          <td style="text-align:right">${action}</td>
+          <td style="text-align:right">${action}${deleteBtn}</td>
         </tr>`;
       }).join('');
     }
@@ -2218,6 +2222,17 @@
         const res = await fetch(`/api/orders/${id}/receive`, { method: 'POST' });
         if (res.ok) {
           alert('✅ Buyurtma qabul qilindi. Zaxira yangilandi!');
+          loadData();
+        }
+      } catch (e) { alert('❌ Xatolik yuz berdi'); }
+    }
+
+    async function deleteOrder(id) {
+      if (!confirm('Ushbu buyurtmani o\'chirmoqchimisiz? Agar qabul qilingan bo\'lsa, ombor va moliya qayta hisoblanadi.')) return;
+      try {
+        const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          alert('✅ Buyurtma o\'chirildi.');
           loadData();
         }
       } catch (e) { alert('❌ Xatolik yuz berdi'); }
