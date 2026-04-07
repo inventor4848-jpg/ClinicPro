@@ -1155,13 +1155,9 @@
           onclick="closeModal('add-appt-modal')">×</button>
       </div>
       <div class="form-group"><label class="form-label">Bemor *</label>
-        <select class="form-control" id="appt-patient">
-          <option>Sarvar Karimov (B-001)</option>
-          <option>Malika Rashidova (B-002)</option>
-          <option>Jahongir Normatov (B-003)</option>
-          <option>Zulfiya Usmonova (B-004)</option>
-          <option>Akbar Toshmatov (B-005)</option>
-        </select>
+        <input class="form-control" id="appt-patient" list="patient-list"
+          placeholder="Bemor ismini kiriting yoki tanlang...">
+        <datalist id="patient-list"></datalist>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group"><label class="form-label">Sana *</label><input class="form-control" type="date"
@@ -1402,7 +1398,7 @@
         const [pRes, aRes, dRes, bRes, iRes, sRes] = await Promise.all([
           fetch('/api/patients'), fetch('/api/appointments'), fetch('/api/doctors'), fetch('/api/finance'), fetch('/api/inventory'), fetch('/api/stats')
         ]);
-        if (pRes.ok) patients = await pRes.json();
+        if (pRes.ok) { patients = await pRes.json(); populatePatientSelects(); }
         if (aRes.ok) appointments = await aRes.json();
         if (dRes.ok) { doctors = await dRes.json(); populateDoctorSelects(); }
         if (bRes.ok) billing = await bRes.json();
@@ -1452,6 +1448,17 @@
     }
     const avatarColors = ['rgba(67,97,238,0.12);color:#4361EE', 'rgba(139,92,246,0.12);color:#8B5CF6', 'rgba(6,182,212,0.12);color:#06B6D4', 'rgba(245,158,11,0.12);color:#F59E0B', 'rgba(239,68,68,0.12);color:#EF4444', 'rgba(16,185,129,0.12);color:#10B981'];
     function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
+
+    function populatePatientSelects() {
+      const options = patients.map(p => {
+        const last = p.last_name || p.last || '';
+        const first = p.first_name || p.first || '';
+        const name = last + ' ' + first;
+        return `<option value="${name} (${p.id})">`;
+      }).join('');
+      const list = document.getElementById('patient-list');
+      if (list) list.innerHTML = options;
+    }
 
     // --- NEW SETTINGS & PROFILE LOGIC ---
     function updateTopAvatar(name) {
@@ -1799,14 +1806,19 @@
     }
     function addAppointment() {
       const patient = document.getElementById('appt-patient').value, date = document.getElementById('appt-date').value, time = document.getElementById('appt-time').value;
-      if (!date) { alert('⚠️ Sana majburiy!'); return; }
-      const newA = { appointment_time: time, appointment_date: date, patient_name: patient.split('(')[0].trim(), doctor: document.getElementById('appt-doc').value, type: document.getElementById('appt-type').value, status: 'Rejalashtirilgan' };
+      if (!patient || !date) { alert('⚠️ Bemor va sana majburiy!'); return; }
+
+      // If patient pick from list, it has (ID). Clean it. 
+      const pName = patient.includes('(') ? patient.split('(')[0].trim() : patient.trim();
+
+      const newA = { appointment_time: time, appointment_date: date, patient_name: pName, doctor: document.getElementById('appt-doc').value, type: document.getElementById('appt-type').value, status: 'Rejalashtirilgan' };
       fetch('/api/appointments', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newA)
       }).then(() => loadData());
       closeModal('add-appt-modal');
       document.getElementById('appt-date').value = '';
+      document.getElementById('appt-patient').value = '';
       alert('✅ Qabul ' + date + ' sanaga ' + time + ' uchun muvaffaqiyatli rejalashtirildi!');
     }
 
