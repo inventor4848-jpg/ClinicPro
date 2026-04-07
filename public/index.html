@@ -776,25 +776,11 @@
             <div class="stat-value" style="color:var(--green)" id="stat-appts">24</div>
             <div class="stat-change up">↑ 3 ta yangi</div>
           </div>
-          <div class="stat-card" id="card-income">
-            <div class="stat-icon">💰</div>
-            <div class="stat-label">Jami kirim (oylik)</div>
-            <div class="stat-value" style="color:var(--green)" id="stat-income">0</div>
-          </div>
-          <div class="stat-card" id="card-outflow">
-            <div class="stat-icon">💸</div>
-            <div class="stat-label">Jami chiqim (oylik)</div>
-            <div class="stat-value" style="color:var(--red)" id="stat-outflow">0</div>
-          </div>
-          <div class="stat-card" id="card-profit">
-            <div class="stat-icon">📈</div>
-            <div class="stat-label">Sof foyda</div>
-            <div class="stat-value" style="color:var(--accent)" id="stat-profit">0</div>
-          </div>
           <div class="stat-card" id="card-inventory">
             <div class="stat-icon">💊</div>
-            <div class="stat-label">Zaxira ogohlantirishi</div>
-            <div class="stat-value" style="color:var(--amber)" id="stat-low-stock">0</div>
+            <div class="stat-label">Kam zahiradagi dorilar</div>
+            <div class="stat-value" style="color:var(--red)" id="stat-low-stock">0</div>
+            <div class="stat-change down" id="stat-low-stock-alert">Zaxira to'ldiring!</div>
           </div>
         </div>
         <div class="grid-3">
@@ -924,20 +910,7 @@
       </div>
       <div class="page" id="page-billing">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-          <div style="display:flex;gap:15px">
-            <div class="stat-mini">
-              <span style="color:var(--text3);font-size:11px">Kirim:</span>
-              <strong style="color:var(--green)" id="bill-inflow">0</strong>
-            </div>
-            <div class="stat-mini">
-              <span style="color:var(--text3);font-size:11px">Chiqim:</span>
-              <strong style="color:var(--red)" id="bill-outflow">0</strong>
-            </div>
-            <div class="stat-mini">
-              <span style="color:var(--text3);font-size:11px">Foyda:</span>
-              <strong style="color:var(--accent)" id="bill-profit">0</strong>
-            </div>
-          </div>
+          <h3 style="margin:0;font-size:16px;color:var(--text)">💰 Tranzaksiyalar tarixi</h3>
           <div style="display:flex;gap:10px">
             <button class="btn btn-outline" onclick="openExpenseModal()">💸 Chiqim qo'shish</button>
             <button class="btn btn-primary" onclick="openFinanceModal()">💰 Kirim qo'shish</button>
@@ -968,6 +941,26 @@
         </div>
       </div>
       <div class="page" id="page-reports">
+        <div class="stats-grid" style="margin-bottom:24px">
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-label">Jami kirim (oylik)</div>
+            <div class="stat-value" style="color:var(--green)" id="stat-income">0</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Kassadagi jami tushum</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💸</div>
+            <div class="stat-label">Jami chiqim (oylik)</div>
+            <div class="stat-value" style="color:var(--red)" id="stat-outflow">0</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Xaridlar va boshqa xarajatlar</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">Sof foyda</div>
+            <div class="stat-value" style="color:var(--accent)" id="stat-profit">0</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Kirim - Chiqim ayirmasi</div>
+          </div>
+        </div>
         <div class="grid-2" style="margin-bottom:20px">
           <div class="card">
             <div class="card-header">
@@ -1532,22 +1525,14 @@
           if (sa) sa.textContent = stats.todayAppointments.toLocaleString();
 
           const si = document.getElementById('stat-income');
-          if (si) si.textContent = stats.monthlyIncome.toLocaleString();
+          if (si) si.textContent = stats.monthlyIncome.toLocaleString() + " so'm";
           const so = document.getElementById('stat-outflow');
-          if (so) so.textContent = stats.monthlyOutflow.toLocaleString();
+          if (so) so.textContent = stats.monthlyOutflow.toLocaleString() + " so'm";
           const spr = document.getElementById('stat-profit');
-          if (spr) spr.textContent = stats.netProfit.toLocaleString();
+          if (spr) spr.textContent = stats.netProfit.toLocaleString() + " so'm";
 
           const sls = document.getElementById('stat-low-stock');
           if (sls) sls.textContent = stats.lowStock;
-
-          // Billing page stats
-          const bi = document.getElementById('bill-inflow');
-          if (bi) bi.textContent = stats.monthlyIncome.toLocaleString() + " so'm";
-          const bo = document.getElementById('bill-outflow');
-          if (bo) bo.textContent = stats.monthlyOutflow.toLocaleString() + " so'm";
-          const bp = document.getElementById('bill-profit');
-          if (bp) bp.textContent = stats.netProfit.toLocaleString() + " so'm";
         }
 
         loadProfile();
