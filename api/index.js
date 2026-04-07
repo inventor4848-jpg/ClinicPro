@@ -309,12 +309,16 @@ app.get('/api/stats', async (req, res) => {
         const totalPatients = parseInt(patientsRes.rows[0].count, 10);
         const todayAppointments = parseInt(appointmentsRes.rows[0].count, 10);
 
-        // Monthly income: sum of paid amounts this month
-        const incomeRes = await db.query(`
-          SELECT COALESCE(SUM(amount), 0) as total FROM finance 
-          WHERE status = 'To''langan' AND date >= DATE_TRUNC('month', CURRENT_DATE)
+        // Monthly totals: Inflow, Outflow, Profit
+        const financeRes = await db.query(`
+          SELECT 
+            COALESCE(SUM(CASE WHEN type = 'Kirim' AND status = 'To''langan' THEN amount ELSE 0 END), 0) as inflow,
+            COALESCE(SUM(CASE WHEN type = 'Chiqim' AND status = 'To''langan' THEN amount ELSE 0 END), 0) as outflow
+          FROM finance 
+          WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
         `);
-        const monthlyIncome = incomeRes.rows[0].total;
+        const { inflow, outflow } = financeRes.rows[0];
+        const netProfit = inflow - outflow;
 
         // Inventory alerts: count items below min_qty
         const lowStockRes = await db.query('SELECT COUNT(*) FROM inventory WHERE qty < min_qty');
@@ -323,7 +327,9 @@ app.get('/api/stats', async (req, res) => {
         res.json({
             totalPatients,
             todayAppointments,
-            monthlyIncome,
+            monthlyIncome: inflow,
+            monthlyOutflow: outflow,
+            netProfit,
             lowStock
         });
     } catch (err) {

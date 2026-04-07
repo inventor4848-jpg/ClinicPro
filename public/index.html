@@ -778,15 +778,23 @@
           </div>
           <div class="stat-card" id="card-income">
             <div class="stat-icon">💰</div>
-            <div class="stat-label">Oylik daromad</div>
-            <div class="stat-value" style="color:var(--amber)" id="stat-income">0</div>
-            <div class="stat-change up" id="stat-income-change">↑ 0% o'sish</div>
+            <div class="stat-label">Jami kirim (oylik)</div>
+            <div class="stat-value" style="color:var(--green)" id="stat-income">0</div>
+          </div>
+          <div class="stat-card" id="card-outflow">
+            <div class="stat-icon">💸</div>
+            <div class="stat-label">Jami chiqim (oylik)</div>
+            <div class="stat-value" style="color:var(--red)" id="stat-outflow">0</div>
+          </div>
+          <div class="stat-card" id="card-profit">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">Sof foyda</div>
+            <div class="stat-value" style="color:var(--accent)" id="stat-profit">0</div>
           </div>
           <div class="stat-card" id="card-inventory">
             <div class="stat-icon">💊</div>
-            <div class="stat-label">Kam zahiradagi dorilar</div>
-            <div class="stat-value" style="color:var(--red)" id="stat-low-stock">0</div>
-            <div class="stat-change down" id="stat-low-stock-alert">Zaxira to'ldiring!</div>
+            <div class="stat-label">Zaxira ogohlantirishi</div>
+            <div class="stat-value" style="color:var(--amber)" id="stat-low-stock">0</div>
           </div>
         </div>
         <div class="grid-3">
@@ -915,30 +923,24 @@
         <div class="doctors-grid" id="doctors-grid"></div>
       </div>
       <div class="page" id="page-billing">
-        <div class="stats-grid" style="margin-bottom:24px">
-          <div class="stat-card">
-            <div class="stat-icon">💵</div>
-            <div class="stat-label">Bugungi tushumlar</div>
-            <div class="stat-value" id="fin-today" style="font-size:20px;color:var(--green)">0</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div style="display:flex;gap:15px">
+            <div class="stat-mini">
+              <span style="color:var(--text3);font-size:11px">Kirim:</span>
+              <strong style="color:var(--green)" id="bill-inflow">0</strong>
+            </div>
+            <div class="stat-mini">
+              <span style="color:var(--text3);font-size:11px">Chiqim:</span>
+              <strong style="color:var(--red)" id="bill-outflow">0</strong>
+            </div>
+            <div class="stat-mini">
+              <span style="color:var(--text3);font-size:11px">Foyda:</span>
+              <strong style="color:var(--accent)" id="bill-profit">0</strong>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-label">Oylik tushumlar</div>
-            <div class="stat-value" id="fin-month" style="font-size:20px;color:var(--accent)">0</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">⏳</div>
-            <div class="stat-label">Kutilayotgan to'lovlar</div>
-            <div class="stat-value" id="fin-pending" style="font-size:20px;color:var(--amber)">0</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">🔴</div>
-            <div class="stat-label">Muddati o'tgan</div>
-            <div class="stat-value" id="fin-overdue" style="font-size:20px;color:var(--red)">0</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">so'm</div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" onclick="openExpenseModal()">💸 Chiqim qo'shish</button>
+            <button class="btn btn-primary" onclick="openFinanceModal()">💰 Kirim qo'shish</button>
           </div>
         </div>
         <div class="card">
@@ -1408,6 +1410,31 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="add-expense-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">💸 Yangi chiqim (xarajat)</div>
+        <button class="modal-close" onclick="closeModal('add-expense-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Turi (Izoh) *</label>
+        <input class="form-control" id="exp-service" placeholder="Masalan: Ijara to'lovi, Oyliklar">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mas'ul xodim/Bo'lim</label>
+        <input class="form-control" id="exp-name" placeholder="Masalan: Ma'muryat">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Miqdor (so'm) *</label>
+        <input class="form-control" type="number" id="exp-amount" placeholder="0">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-expense-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addExpense()">✅ Saqlash</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ─── AUTH GUARD ────────────────────────────────────────────
     const currentRole = sessionStorage.getItem('cp_role');
@@ -1503,10 +1530,24 @@
           if (sp) sp.textContent = stats.totalPatients.toLocaleString();
           const sa = document.getElementById('stat-appts');
           if (sa) sa.textContent = stats.todayAppointments.toLocaleString();
+
           const si = document.getElementById('stat-income');
           if (si) si.textContent = stats.monthlyIncome.toLocaleString();
-          const sl = document.getElementById('stat-low-stock');
-          if (sl) sl.textContent = stats.lowStock;
+          const so = document.getElementById('stat-outflow');
+          if (so) so.textContent = stats.monthlyOutflow.toLocaleString();
+          const spr = document.getElementById('stat-profit');
+          if (spr) spr.textContent = stats.netProfit.toLocaleString();
+
+          const sls = document.getElementById('stat-low-stock');
+          if (sls) sls.textContent = stats.lowStock;
+
+          // Billing page stats
+          const bi = document.getElementById('bill-inflow');
+          if (bi) bi.textContent = stats.monthlyIncome.toLocaleString() + " so'm";
+          const bo = document.getElementById('bill-outflow');
+          if (bo) bo.textContent = stats.monthlyOutflow.toLocaleString() + " so'm";
+          const bp = document.getElementById('bill-profit');
+          if (bp) bp.textContent = stats.netProfit.toLocaleString() + " so'm";
         }
 
         loadProfile();
@@ -1797,35 +1838,23 @@
       }).join('');
     }
     function renderBilling() {
-      const tb = document.getElementById('billing-table');
-
-      let todaySum = 0, monthSum = 0, pendingSum = 0, overdueSum = 0;
-      const t = new Date();
-      const todayStr = t.toISOString().split('T')[0];
-      const monthStr = todayStr.substring(0, 7);
-
-      billing.forEach(b => {
-        const amt = parseFloat(b.amount) || 0;
-        if (b.status === "To'langan" || b.status === "Kutmoqda" || b.status === "Rejalashtirilgan") {
-          // just logic check
-        }
-        if (b.status === "To'langan") {
-          if (b.date && b.date.startsWith(todayStr)) todaySum += amt;
-          if (b.date && b.date.startsWith(monthStr)) monthSum += amt;
-        } else if (b.status === "Kutilmoqda" || b.status === "Kutmoqda") {
-          pendingSum += amt;
-        } else if (b.status === "Muddati o'tdi") {
-          overdueSum += amt;
-        }
-      });
-
-      const ft = document.getElementById('fin-today'); if (ft) ft.textContent = todaySum.toLocaleString();
-      const fm = document.getElementById('fin-month'); if (fm) fm.textContent = monthSum.toLocaleString();
-      const fp = document.getElementById('fin-pending'); if (fp) fp.textContent = pendingSum.toLocaleString();
-      const fo = document.getElementById('fin-overdue'); if (fo) fo.textContent = overdueSum.toLocaleString();
-
-      if (!tb) return;
-      tb.innerHTML = billing.map(b => '<tr><td style="color:var(--text3);font-size:11px">' + b.id + '</td><td style="color:var(--text)">' + b.patient_name + '</td><td>' + b.service + '</td><td style="font-weight:700;color:var(--green)">' + b.amount + " so'm" + '</td><td style="color:var(--text3)">' + b.date + '</td><td><span class="badge badge-blue">' + b.type + '</span></td><td>' + statusBadge(b.status) + '</td><td><button class="btn btn-outline btn-sm" onclick="alert(\'Chek: ' + b.id + '\')">🧾 Chek</button></td></tr>').join('');
+      const bt = document.getElementById('billing-table'); if (!bt) return;
+      bt.innerHTML = billing.map(b => {
+        const isExpense = b.type === 'Chiqim';
+        const color = isExpense ? 'var(--red)' : 'var(--green)';
+        const sign = isExpense ? '-' : '+';
+        const stBadge = statusBadge(b.status);
+        return `<tr>
+          <td style="color:var(--text3);font-size:11px">${b.id}</td>
+          <td style="color:var(--text)">${b.patient_name}</td>
+          <td>${b.service}</td>
+          <td style="color:${color};font-weight:700">${sign} ${parseFloat(b.amount).toLocaleString()} so'm</td>
+          <td style="color:var(--text3)">${b.date ? b.date.substring(0, 10) : '—'}</td>
+          <td><span class="badge ${b.type === 'Kirim' ? 'badge-green' : 'badge-amber'}">${b.type}</span></td>
+          <td>${stBadge}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="alert('Tranzaksiya: ${b.id}')">🧾 Chek</button></td>
+        </tr>`;
+      }).join('');
     }
 
     function downloadCSV(dataArray, filename) {
@@ -2195,7 +2224,37 @@
         }
       } catch (e) { alert('❌ Xatolik yuz berdi'); }
     }
+    function openExpenseModal() {
+      document.getElementById('exp-service').value = '';
+      document.getElementById('exp-name').value = '';
+      document.getElementById('exp-amount').value = '';
+      openModal('add-expense-modal');
+    }
 
+    async function addExpense() {
+      const service = document.getElementById('exp-service').value;
+      const patient_name = document.getElementById('exp-name').value || 'Ma\'muryat';
+      const amount = document.getElementById('exp-amount').value;
+      if (!service || !amount) { alert('⚠️ Maydonlarni to\'ldiring!'); return; }
+
+      const payload = {
+        id: 'EXP-' + Date.now().toString().slice(-6),
+        patient_name, service, amount,
+        type: 'Chiqim', status: 'To\'langan'
+      };
+
+      try {
+        const res = await fetch('/api/finance', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert('✅ Chiqim saqlandi!');
+          closeModal('add-expense-modal');
+          loadData();
+        }
+      } catch (e) { alert('❌ Xatolik yuz berdi'); }
+    }
     function checkExpiringDrugs() {
       const now = new Date();
       inventory.forEach(item => {
