@@ -1550,6 +1550,19 @@
         else alert('❌ Xatolik yuz berdi');
       } catch (e) { alert('❌ Server bilan ulanib bo\'lmadi'); }
     }
+
+    async function deleteNotification(id) {
+      if (!confirm('Ogohlantirishni o\'chirmoqchimisiz?')) return;
+      try {
+        const res = await fetch('/api/notifications/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          notifications = notifications.filter(n => n.id !== id);
+          renderDashboard();
+        } else {
+          alert('❌ O\'chirishda xatolik yuz berdi');
+        }
+      } catch (e) { alert('❌ Server bilan ulanib bo\'lmadi'); }
+    }
     function renderDashboard() {
       // Hide sensitive cards for doctors
       const incomeCard = document.getElementById('card-income');
@@ -1580,7 +1593,8 @@
         dn.innerHTML = notifications.length === 0 ? '<div style="text-align:center;padding:10px;color:var(--text3);font-size:12px">Hozircha ogohlantirishlar yo\'q</div>' :
           notifications.map(n => {
             const colorClass = n.type === 'error' ? 'alert-red' : n.type === 'warning' ? 'alert-amber' : 'alert-blue';
-            return '<div class="alert ' + colorClass + '">' + n.message + '</div>';
+            const deleteBtn = (currentRole === 'registrar' || currentRole === 'admin') ? `<span onclick="deleteNotification(${n.id})" style="margin-left:auto;cursor:pointer;opacity:0.6;font-size:14px;padding:0 4px" title="O'chirish">✕</span>` : '';
+            return '<div class="alert ' + colorClass + '">' + n.message + deleteBtn + '</div>';
           }).join('');
       }
 
