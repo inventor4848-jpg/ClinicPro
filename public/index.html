@@ -1030,7 +1030,7 @@
             turi mavjud</span>
           <div style="display:flex;gap:10px">
             <button class="btn btn-outline" onclick="alert('Buyurtma berish')">📦 Buyurtma berish</button>
-            <button class="btn btn-primary" onclick="openModal('add-inventory-modal')">+ Dori qo'shish</button>
+            <button class="btn btn-primary" onclick="openAddInventoryModal()">+ Dori qo'shish</button>
           </div>
         </div>
         <div class="card">
@@ -1290,6 +1290,20 @@
           <label class="form-label">Kategoriya</label>
           <input class="form-control" id="inv-cat" placeholder="Antibiotiklar, Vitaminlar...">
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Minimal zaxira</label>
+          <input class="form-control" type="number" id="inv-min-qty" value="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Birlik</label>
+          <input class="form-control" id="inv-unit" value="dona">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Muddati (Amal qilish)</label>
+        <input class="form-control" id="inv-exp-date" placeholder="YYYY-MM (masalan: 2025-06)">
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('add-inventory-modal')">Bekor qilish</button>
@@ -1775,7 +1789,8 @@
         const low = item.qty < minVal;
         const warn = !low && item.qty < minVal * 1.5;
         const barColor = low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--green)';
-        return '<div class="inventory-row"><div style="font-size:20px;width:24px;text-align:center">' + (low ? '⚠️' : '💊') + '</div><div class="inv-name"><div style="font-size:13px;font-weight:500;color:var(--text)">' + item.name + '</div><div style="font-size:11px;color:var(--text3);margin-top:2px">' + (item.category || 'Dori') + ' · Muddati: ' + (item.exp_date || '—') + '</div></div><div class="inv-qty" style="color:' + (low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--text)') + '">' + item.qty + ' <span style="font-size:11px;color:var(--text3)">' + item.unit + '</span></div><div style="width:140px"><div class="mini-bar"><div class="mini-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">Min zaxira: ' + minVal + ' ' + item.unit + '</div></div><div style="min-width:90px;text-align:right"><span class="badge ' + (low ? 'badge-red' : warn ? 'badge-amber' : 'badge-green') + '">' + (low ? 'Kam!' : warn ? 'Ogohlantirish' : 'Yetarli') + '</span></div></div>';
+        const actions = '<div style="display:flex;gap:6px;justify-content:flex-end;margin-left:12px"><button class="btn btn-outline btn-sm" onclick="editInventory(' + item.id + ')" style="padding:4px 8px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInventory(' + item.id + ')" style="padding:4px 8px">🗑</button></div>';
+        return '<div class="inventory-row"><div style="font-size:20px;width:24px;text-align:center">' + (low ? '⚠️' : '💊') + '</div><div class="inv-name"><div style="font-size:13px;font-weight:500;color:var(--text)">' + item.name + '</div><div style="font-size:11px;color:var(--text3);margin-top:2px">' + (item.category || 'Dori') + ' · Muddati: ' + (item.exp_date || '—') + '</div></div><div class="inv-qty" style="color:' + (low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--text)') + '">' + item.qty + ' <span style="font-size:11px;color:var(--text3)">' + item.unit + '</span></div><div style="width:140px"><div class="mini-bar"><div class="mini-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">Min zaxira: ' + minVal + ' ' + item.unit + '</div></div><div style="min-width:90px;text-align:right"><span class="badge ' + (low ? 'badge-red' : warn ? 'badge-amber' : 'badge-green') + '">' + (low ? 'Kam!' : warn ? 'Ogohlantirish' : 'Yetarli') + '</span></div>' + actions + '</div>';
       }).join('');
     }
     function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1894,22 +1909,71 @@
       });
     }
 
+    let editingInventoryId = null;
+
+    function openAddInventoryModal() {
+      editingInventoryId = null;
+      document.getElementById('inv-name').value = '';
+      document.getElementById('inv-qty').value = '';
+      document.getElementById('inv-cat').value = '';
+      document.getElementById('inv-min-qty').value = '50';
+      document.getElementById('inv-unit').value = 'dona';
+      document.getElementById('inv-exp-date').value = '';
+      const title = document.querySelector('#add-inventory-modal .modal-title');
+      if (title) title.textContent = '💊 Yangi dori qo\'shish';
+      openModal('add-inventory-modal');
+    }
+
+    function editInventory(id) {
+      const item = inventory.find(i => i.id === id);
+      if (!item) return;
+      editingInventoryId = id;
+      document.getElementById('inv-name').value = item.name;
+      document.getElementById('inv-qty').value = item.qty;
+      document.getElementById('inv-cat').value = item.category || '';
+      document.getElementById('inv-min-qty').value = item.min_qty || 50;
+      document.getElementById('inv-unit').value = item.unit || 'dona';
+      document.getElementById('inv-exp-date').value = item.exp_date || '';
+      const title = document.querySelector('#add-inventory-modal .modal-title');
+      if (title) title.textContent = '✏️ Dorini tahrirlash';
+      openModal('add-inventory-modal');
+    }
+
+    async function deleteInventory(id) {
+      if (!confirm('Ushbu dorini ro\'yxatdan o\'chirmoqchimisiz?')) return;
+      try {
+        const res = await fetch('/api/inventory/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          inventory = inventory.filter(i => i.id !== id);
+          renderInventory();
+        } else alert('❌ O\'chirishda xatolik yuz berdi');
+      } catch (e) { alert('❌ Server bilan ulanib bo\'lmadi'); }
+    }
+
     function addInventory() {
       const name = document.getElementById('inv-name').value;
-      const qty = document.getElementById('inv-qty').value;
+      const qty = parseInt(document.getElementById('inv-qty').value, 10);
       const category = document.getElementById('inv-cat').value;
-      if (!name || !qty) { alert('⚠️ Nomi va miqdorini kiriting!'); return; }
-      fetch('/api/inventory', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, qty, category, unit: 'dona', exp_date: '2026-12', crit: false })
+      const min_qty = parseInt(document.getElementById('inv-min-qty').value, 10);
+      const unit = document.getElementById('inv-unit').value;
+      const exp_date = document.getElementById('inv-exp-date').value;
+
+      if (!name || isNaN(qty)) { alert('⚠️ Nomi va miqdorini kiriting!'); return; }
+      const payload = { name, qty, category, min_qty, unit, exp_date, crit: qty < min_qty };
+      const url = editingInventoryId ? '/api/inventory/' + editingInventoryId : '/api/inventory';
+      const method = editingInventoryId ? 'PUT' : 'POST';
+
+      fetch(url, {
+        method: method, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(res => {
+        if (!res.ok) throw new Error('Xatolik');
+        return res.json();
       }).then(() => {
         loadData();
         closeModal('add-inventory-modal');
-        alert(`✅ ${name} dori-darmoni bazaga qo'shildi!`);
-        document.getElementById('inv-name').value = '';
-        document.getElementById('inv-qty').value = '';
-        document.getElementById('inv-cat').value = '';
-      });
+        alert('✅ Ma\'lumotlar saqlandi!');
+      }).catch(e => alert('❌ Xatolik yuz berdi'));
     }
 
     function addNotification() {

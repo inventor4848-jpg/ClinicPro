@@ -180,6 +180,31 @@ app.post('/api/inventory', async (req, res) => {
     }
 });
 
+app.put('/api/inventory/:id', async (req, res) => {
+    const { name, category, qty, min_qty, unit, exp_date, crit } = req.body;
+    try {
+        const query = `
+            UPDATE inventory SET name = $1, category = $2, qty = $3, min_qty = $4, unit = $5, exp_date = $6, crit = $7
+            WHERE id = $8 RETURNING *
+        `;
+        const values = [name, category, qty, min_qty, unit, exp_date, crit, req.params.id];
+        const { rows } = await db.query(query, values);
+        if (rows.length === 0) return res.status(404).json({ error: 'Item not found' });
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/inventory/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM inventory WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Finance CRUD
 app.get('/api/finance', async (req, res) => {
     try {
