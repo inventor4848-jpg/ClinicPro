@@ -1382,29 +1382,30 @@
       </div>
     </div>
   </div>
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">🔔 Yangi ogohlantirish</div>
-      <button class="modal-close" onclick="closeModal('add-notif-modal')">×</button>
+  <div class="modal-overlay" id="add-notif-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔔 Yangi ogohlantirish</div>
+        <button class="modal-close" onclick="closeModal('add-notif-modal')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Xabar matni *</label>
+        <textarea class="form-control" id="notif-message"
+          placeholder="Masalan: Dori-darmon zaxirasi kamaymoqda..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Turi</label>
+        <select class="form-control" id="notif-type">
+          <option value="info">Ma'lumot (Ko'k)</option>
+          <option value="warning">Ogohlantirish (Sariq)</option>
+          <option value="error">Hatar (Qizil)</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('add-notif-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addNotification()">✅ Saqlash</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Xabar matni *</label>
-      <textarea class="form-control" id="notif-message"
-        placeholder="Masalan: Dori-darmon zaxirasi kamaymoqda..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Turi</label>
-      <select class="form-control" id="notif-type">
-        <option value="info">Ma'lumot (Ko'k)</option>
-        <option value="warning">Ogohlantirish (Sariq)</option>
-        <option value="error">Hatar (Qizil)</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('add-notif-modal')">Bekor qilish</button>
-      <button class="btn btn-primary" onclick="addNotification()">✅ Saqlash</button>
-    </div>
-  </div>
   </div>
 
   <script>
