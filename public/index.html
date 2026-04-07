@@ -1625,7 +1625,14 @@
     }
     function renderInventory() {
       const il = document.getElementById('inventory-list'); if (!il) return;
-      il.innerHTML = inventory.map(item => { const pct = Math.min(Math.round((item.qty / (item.min * 3)) * 100), 100); const low = item.qty < item.min; const warn = !low && item.qty < item.min * 1.5; const barColor = low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--green)'; return '<div class="inventory-row"><div style="font-size:20px;width:24px;text-align:center">' + (low ? '⚠️' : '💊') + '</div><div class="inv-name"><div style="font-size:13px;font-weight:500;color:var(--text)">' + item.name + '</div><div style="font-size:11px;color:var(--text3);margin-top:2px">' + item.cat + ' · Muddati: ' + item.exp + '</div></div><div class="inv-qty" style="color:' + (low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--text)') + '">' + item.qty + ' <span style="font-size:11px;color:var(--text3)">' + item.unit + '</span></div><div style="width:140px"><div class="mini-bar"><div class="mini-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">Min zaxira: ' + item.min + ' ' + item.unit + '</div></div><div style="min-width:90px;text-align:right"><span class="badge ' + (low ? 'badge-red' : warn ? 'badge-amber' : 'badge-green') + '">' + (low ? 'Kam!' : warn ? 'Ogohlantirish' : 'Yetarli') + '</span></div></div>'; }).join('');
+      il.innerHTML = inventory.map(item => {
+        const minVal = item.min_qty || 50;
+        const pct = Math.min(Math.round((item.qty / (minVal * 3)) * 100), 100);
+        const low = item.qty < minVal;
+        const warn = !low && item.qty < minVal * 1.5;
+        const barColor = low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--green)';
+        return '<div class="inventory-row"><div style="font-size:20px;width:24px;text-align:center">' + (low ? '⚠️' : '💊') + '</div><div class="inv-name"><div style="font-size:13px;font-weight:500;color:var(--text)">' + item.name + '</div><div style="font-size:11px;color:var(--text3);margin-top:2px">' + (item.category || 'Dori') + ' · Muddati: ' + (item.exp_date || '—') + '</div></div><div class="inv-qty" style="color:' + (low ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--text)') + '">' + item.qty + ' <span style="font-size:11px;color:var(--text3)">' + item.unit + '</span></div><div style="width:140px"><div class="mini-bar"><div class="mini-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px">Min zaxira: ' + minVal + ' ' + item.unit + '</div></div><div style="min-width:90px;text-align:right"><span class="badge ' + (low ? 'badge-red' : warn ? 'badge-amber' : 'badge-green') + '">' + (low ? 'Kam!' : warn ? 'Ogohlantirish' : 'Yetarli') + '</span></div></div>';
+      }).join('');
     }
     function openModal(id) { document.getElementById(id).classList.add('open'); }
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1690,7 +1697,8 @@
       fetch('/api/doctors', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, spec, exp, avatar })
-      }).then(() => {
+      }).then(res => {
+        if (!res.ok) throw new Error('Serverda xatolik yuz berdi');
         loadData();
         closeModal('add-doctor-modal');
         alert(`✅ Shifokor ${name} muvaffaqiyatli qo'shildi!`);
@@ -1698,6 +1706,9 @@
         document.getElementById('doc-spec').value = '';
         document.getElementById('doc-exp').value = '';
         if (document.getElementById('doc-avatar')) document.getElementById('doc-avatar').value = '';
+      }).catch(err => {
+        console.error(err);
+        alert('❌ Shifokorni saqlashda xatolik: ' + err.message);
       });
     }
 
@@ -1759,11 +1770,15 @@
       fetch('/api/notifications', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, type })
-      }).then(() => {
+      }).then(res => {
+        if (!res.ok) throw new Error('Serverda xatolik yuz berdi');
         loadData();
         closeModal('add-notif-modal');
         alert('✅ Ogohlantirish saqlandi!');
         document.getElementById('notif-message').value = '';
+      }).catch(err => {
+        console.error(err);
+        alert('❌ Ogohlantirishni saqlashda xatolik: ' + err.message);
       });
     }
 
