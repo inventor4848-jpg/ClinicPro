@@ -20,7 +20,7 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ error: 'Login yoki parol noto\'g\'ri!' });
         }
         const user = rows[0];
-        res.json({ success: true, role: user.role, username: user.username });
+        res.json({ success: true, role: user.role, username: user.username, fullname: user.fullname, position: user.position });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -268,16 +268,52 @@ app.delete('/api/notifications/:id', async (req, res) => {
     }
 });
 
-// Dashboard alerts endpoint
-app.get('/api/alerts', async (req, res) => {
+// --- SETTINGS & PROFILE ---
+app.get('/api/profile/:username', async (req, res) => {
     try {
-        const lowStock = await db.query('SELECT name, qty FROM inventory WHERE qty <= 10');
-        const alerts = lowStock.rows.map(item => ({
-            type: 'red',
-            message: `💊 ${item.name} zaxirasi tugayapti (${item.qty} dona qoldi)`
-        }));
-        // We can push other dynamic alerts based on logic
-        res.json(alerts);
+        const { rows } = await db.query('SELECT username, role, fullname, position FROM users WHERE username = $1', [req.params.username]);
+        if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/profile/:username', async (req, res) => {
+    const { fullname, position, password } = req.body;
+    try {
+        let query = 'UPDATE users SET fullname = $1, position = $2';
+        let values = [fullname, position, req.params.username];
+        if (password) {
+            query += ', password = $4';
+            values.push(password);
+        }
+        query += ' WHERE username = $3 RETURNING *';
+        const { rows } = await db.query(query, values);
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/settings', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM settings');
+        const settingsMap = {};
+        rows.forEach(r => settingsMap[r.key] = r.value);
+        res.json(settingsMap);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/settings', async (req, res) => {
+    const settings = req.body; // { key: value, ... }
+    try {
+        for (const [key, value] of Object.entries(settings)) {
+            await db.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2', [key, value]);
+        }
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

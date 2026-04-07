@@ -758,7 +758,7 @@
           placeholder="🔍  Bemor, shifokor yoki xizmat qidirish..." oninput="globalSearch(this.value)">
         <div class="notif-btn" onclick="showNotifications()" title="Bildirishnomalar">🔔<div class="notif-dot"></div>
         </div>
-        <div class="avatar" title="Profil" onclick="showPage('settings',null)">AK</div>
+        <div class="avatar" id="top-avatar" title="Profil" onclick="showPage('settings',null)">AK</div>
       </div>
     </div>
     <div class="content">
@@ -1048,18 +1048,18 @@
               <div class="card-title">🏥 Klinika ma'lumotlari</div>
             </div>
             <div class="form-group"><label class="form-label">Klinika nomi</label><input class="form-control"
-                value="ClinicPro Klinikasi"></div>
+                id="settings-clinic-name" value="ClinicPro Klinikasi"></div>
             <div class="form-group"><label class="form-label">Litsenziya raqami</label><input class="form-control"
-                value="UZ-MED-2024-00142"></div>
+                id="settings-license" value="UZ-MED-2024-00142"></div>
             <div class="form-group"><label class="form-label">Manzil</label><input class="form-control"
-                value="Toshkent sh., Chilonzor t., 12-uy"></div>
+                id="settings-address" value="Toshkent sh., Chilonzor t., 12-uy"></div>
             <div class="form-group"><label class="form-label">Telefon</label><input class="form-control"
-                value="+998 71 234 56 78"></div>
+                id="settings-phone" value="+998 71 234 56 78"></div>
             <div class="form-group"><label class="form-label">Email</label><input class="form-control"
-                value="info@clinicpro.uz"></div>
+                id="settings-email" value="info@clinicpro.uz"></div>
             <div class="form-group"><label class="form-label">Veb-sayt</label><input class="form-control"
-                value="www.clinicpro.uz"></div>
-            <button class="btn btn-primary" onclick="alert('✅ Ma\'lumotlar saqlandi!')">Saqlash</button>
+                id="settings-website" value="www.clinicpro.uz"></div>
+            <button class="btn btn-primary" onclick="saveClinicSettings()">Saqlash</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:16px">
             <div class="card">
@@ -1067,37 +1067,40 @@
                 <div class="card-title">⚙️ Tizim sozlamalari</div>
               </div>
               <div class="form-group"><label class="form-label">Ish vaqti boshlanishi</label><input class="form-control"
-                  type="time" value="08:00"></div>
+                  id="settings-start-time" type="time" value="08:00"></div>
               <div class="form-group"><label class="form-label">Ish vaqti tugashi</label><input class="form-control"
-                  type="time" value="18:00"></div>
-              <div class="form-group"><label class="form-label">Qabul davomiyligi</label><select class="form-control">
+                  id="settings-end-time" type="time" value="18:00"></div>
+              <div class="form-group"><label class="form-label">Qabul davomiyligi</label><select class="form-control"
+                  id="settings-duration">
                   <option>15 daqiqa</option>
                   <option selected>30 daqiqa</option>
                   <option>45 daqiqa</option>
                   <option>60 daqiqa</option>
                 </select></div>
-              <div class="form-group"><label class="form-label">Valyuta</label><select class="form-control">
+              <div class="form-group"><label class="form-label">Valyuta</label><select class="form-control"
+                  id="settings-currency">
                   <option selected>UZS (so'm)</option>
                   <option>USD</option>
                 </select></div>
-              <div class="form-group"><label class="form-label">Til</label><select class="form-control">
+              <div class="form-group"><label class="form-label">Til</label><select class="form-control"
+                  id="settings-lang">
                   <option selected>O'zbekcha</option>
                   <option>Russian</option>
                   <option>English</option>
                 </select></div>
-              <button class="btn btn-primary" onclick="alert('✅ Sozlamalar saqlandi!')">Saqlash</button>
+              <button class="btn btn-primary" onclick="saveSystemSettings()">Saqlash</button>
             </div>
             <div class="card">
               <div class="card-header">
                 <div class="card-title">👤 Foydalanuvchi profili</div>
               </div>
               <div class="form-group"><label class="form-label">To'liq ism</label><input class="form-control"
-                  value="Dr. Alisher Karimov"></div>
+                  id="profile-fullname" value="Admin User"></div>
               <div class="form-group"><label class="form-label">Lavozim</label><input class="form-control"
-                  value="Bosh shifokor / Admin"></div>
-              <div class="form-group"><label class="form-label">Parolni o'zgartirish</label><input class="form-control"
-                  type="password" placeholder="Yangi parol..."></div>
-              <button class="btn btn-primary" onclick="alert('✅ Profil yangilandi!')">Yangilash</button>
+                  id="profile-position" value="Bosh shifokor / Admin"></div>
+              <div class="form-group"><label class="form-label">Yangi parol (ixtiyoriy)</label><input
+                  class="form-control" id="profile-password" type="password" placeholder="Yangi parol..."></div>
+              <button class="btn btn-primary" onclick="updateProfile()">Yangilash</button>
             </div>
           </div>
         </div>
@@ -1367,6 +1370,7 @@
       // Set footer
       document.getElementById('footer-name').textContent = currentUser;
       document.getElementById('footer-role').textContent = ROLE_LABELS[currentRole] || currentRole;
+      updateTopAvatar(currentUser);
     }
     buildNav();
 
@@ -1417,6 +1421,9 @@
           const sl = document.getElementById('stat-low-stock');
           if (sl) sl.textContent = stats.lowStock;
         }
+
+        loadProfile();
+        loadSettings();
       } catch (e) { console.error('Error fetching data:', e); }
       const activePage = document.querySelector('.page.active');
       const pageName = activePage ? activePage.id.replace('page-', '') : 'dashboard';
@@ -1445,6 +1452,104 @@
     }
     const avatarColors = ['rgba(67,97,238,0.12);color:#4361EE', 'rgba(139,92,246,0.12);color:#8B5CF6', 'rgba(6,182,212,0.12);color:#06B6D4', 'rgba(245,158,11,0.12);color:#F59E0B', 'rgba(239,68,68,0.12);color:#EF4444', 'rgba(16,185,129,0.12);color:#10B981'];
     function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
+
+    // --- NEW SETTINGS & PROFILE LOGIC ---
+    function updateTopAvatar(name) {
+      const avatarEl = document.getElementById('top-avatar');
+      if (avatarEl) avatarEl.textContent = initials(name || currentUser);
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/profile/' + currentUser);
+        if (res.ok) {
+          const user = await res.json();
+          if (user.fullname) {
+            document.getElementById('profile-fullname').value = user.fullname;
+            document.getElementById('footer-name').textContent = user.fullname;
+            updateTopAvatar(user.fullname);
+          }
+          if (user.position) document.getElementById('profile-position').value = user.position;
+        }
+      } catch (e) { console.error('Error loading profile:', e); }
+    }
+
+    async function updateProfile() {
+      const fullname = document.getElementById('profile-fullname').value;
+      const position = document.getElementById('profile-position').value;
+      const password = document.getElementById('profile-password').value;
+      try {
+        const res = await fetch('/api/profile/' + currentUser, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullname, position, password })
+        });
+        if (res.ok) {
+          alert('✅ Profil yangilandi!');
+          document.getElementById('footer-name').textContent = fullname;
+          updateTopAvatar(fullname);
+          document.getElementById('profile-password').value = '';
+        } else {
+          const data = await res.json();
+          alert('❌ Xatolik: ' + (data.error || 'Serverda xatolik yuz berdi'));
+        }
+      } catch (e) { alert('❌ Xatolik: Server bilan ulanib bo\'lmadi'); }
+    }
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const s = await res.json();
+          if (s.clinic_name) document.getElementById('settings-clinic-name').value = s.clinic_name;
+          if (s.license) document.getElementById('settings-license').value = s.license;
+          if (s.address) document.getElementById('settings-address').value = s.address;
+          if (s.phone) document.getElementById('settings-phone').value = s.phone;
+          if (s.email) document.getElementById('settings-email').value = s.email;
+          if (s.website) document.getElementById('settings-website').value = s.website;
+          if (s.start_time) document.getElementById('settings-start-time').value = s.start_time;
+          if (s.end_time) document.getElementById('settings-end-time').value = s.end_time;
+          if (s.duration) document.getElementById('settings-duration').value = s.duration;
+          if (s.currency) document.getElementById('settings-currency').value = s.currency;
+          if (s.lang) document.getElementById('settings-lang').value = s.lang;
+        }
+      } catch (e) { console.error('Error loading settings:', e); }
+    }
+
+    async function saveClinicSettings() {
+      const settings = {
+        clinic_name: document.getElementById('settings-clinic-name').value,
+        license: document.getElementById('settings-license').value,
+        address: document.getElementById('settings-address').value,
+        phone: document.getElementById('settings-phone').value,
+        email: document.getElementById('settings-email').value,
+        website: document.getElementById('settings-website').value
+      };
+      saveSettings(settings, 'Ma\'lumotlar saqlandi!');
+    }
+
+    async function saveSystemSettings() {
+      const settings = {
+        start_time: document.getElementById('settings-start-time').value,
+        end_time: document.getElementById('settings-end-time').value,
+        duration: document.getElementById('settings-duration').value,
+        currency: document.getElementById('settings-currency').value,
+        lang: document.getElementById('settings-lang').value
+      };
+      saveSettings(settings, 'Sozlamalar saqlandi!');
+    }
+
+    async function saveSettings(data, msg) {
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) alert('✅ ' + msg);
+        else alert('❌ Xatolik yuz berdi');
+      } catch (e) { alert('❌ Server bilan ulanib bo\'lmadi'); }
+    }
     function renderDashboard() {
       // Hide sensitive cards for doctors
       const incomeCard = document.getElementById('card-income');
