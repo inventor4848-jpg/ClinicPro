@@ -1036,7 +1036,7 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">💊 Dori-darmon zaxirasi</div><input class="form-control" style="width:220px"
-              placeholder="Dori qidirish...">
+              id="inv-search-input" placeholder="Dori qidirish..." oninput="filterInventory()">
           </div>
           <div id="inventory-list"></div>
         </div>
@@ -1781,9 +1781,10 @@
       const data = [{ name: 'Gipertenziya', val: 28, color: 'var(--accent)' }, { name: 'II tur diabet', val: 19, color: 'var(--amber)' }, { name: 'Yurak kasalligi', val: 15, color: 'var(--red)' }, { name: 'Migren', val: 12, color: 'var(--purple)' }, { name: 'Artroz', val: 8, color: 'var(--teal)' }, { name: 'Boshqalar', val: 18, color: 'var(--text3)' }];
       dc.innerHTML = data.map(d => '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">' + d.name + '</span><span style="color:var(--text);font-weight:600">' + d.val + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.val + '%;background:' + d.color + '"></div></div></div>').join('');
     }
-    function renderInventory() {
+    function renderInventory(list) {
       const il = document.getElementById('inventory-list'); if (!il) return;
-      il.innerHTML = inventory.map(item => {
+      const data = list || inventory;
+      il.innerHTML = data.map(item => {
         const minVal = item.min_qty || 50;
         const pct = Math.min(Math.round((item.qty / (minVal * 3)) * 100), 100);
         const low = item.qty < minVal;
@@ -1974,6 +1975,15 @@
         closeModal('add-inventory-modal');
         alert('✅ Ma\'lumotlar saqlandi!');
       }).catch(e => alert('❌ Xatolik yuz berdi'));
+    }
+
+    function filterInventory() {
+      const q = document.getElementById('inv-search-input').value.toLowerCase();
+      const filtered = inventory.filter(item =>
+        item.name.toLowerCase().includes(q) ||
+        (item.category && item.category.toLowerCase().includes(q))
+      );
+      renderInventory(filtered);
     }
 
     function addNotification() {
