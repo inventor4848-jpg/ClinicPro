@@ -215,6 +215,76 @@ app.get('/api/finance', async (req, res) => {
     }
 });
 
+// Suppliers API
+app.get('/api/suppliers', async (req, res) => {
+    try {
+        const { rows } = await db.query('SELECT * FROM suppliers ORDER BY name');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Orders API
+app.get('/api/orders', async (req, res) => {
+    try {
+        const { rows } = await db.query(`
+            SELECT o.*, s.name as supplier_name 
+            FROM orders o 
+            LEFT JOIN suppliers s ON o.supplier_id = s.id 
+            ORDER BY o.created_at DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/orders', async (req, res) => {
+    const { inventory_id, drug_name, supplier_id, qty, unit_price } = req.body;
+    const total_price = qty * unit_price;
+    try {
+        const query = `
+            INSERT INTO orders (inventory_id, drug_name, supplier_id, qty, unit_price, total_price, status)
+            VALUES ($1, $2, $3, $4, $5, $6, 'Kutilmoqda') RETURNING *
+        `;
+        const { rows } = await db.query(query, [inventory_id, drug_name, supplier_id, qty, unit_price, total_price]);
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/orders/:id/receive', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Get order data
+        const orderRes = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
+        if (orderRes.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+        const order = orderRes.rows[0];
+        if (order.status === 'Qabul qilindi') return res.status(400).json({ error: 'Order already received' });
+
+        // 2. Update order status
+        await db.query('UPDATE orders SET status = \'Qabul qilindi\', received_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
+
+        // 3. Update inventory qty
+        if (order.inventory_id) {
+            await db.query('UPDATE inventory SET qty = qty + $1 WHERE id = $2', [order.qty, order.inventory_id]);
+        }
+
+        // 4. Record in finance as expense
+        const financeId = 'EXP-' + Date.now().toString().slice(-6);
+        await db.query(`
+            INSERT INTO finance (id, patient_name, service, amount, date, type, status)
+            VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Chiqim', 'To''langan')
+        `, [financeId, 'Omborxona', 'Dori xaridi: ' + order.drug_name, order.total_price]);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/finance', async (req, res) => {
     const { id, patient_name, service, amount, date, type, status } = req.body;
     try {

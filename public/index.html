@@ -1026,19 +1026,51 @@
       </div>
       <div class="page" id="page-inventory">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-          <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)">142</strong> ta dori
-            turi mavjud</span>
+          <span style="font-size:13px;color:var(--text3)">Jami <strong style="color:var(--text)"
+              id="inv-total-count">0</strong> ta dori turi mavjud</span>
           <div style="display:flex;gap:10px">
-            <button class="btn btn-outline" onclick="alert('Buyurtma berish')">📦 Buyurtma berish</button>
+            <button class="btn btn-outline" onclick="openOrderModal()">📦 Buyurtma berish</button>
             <button class="btn btn-primary" onclick="openAddInventoryModal()">+ Dori qo'shish</button>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">💊 Dori-darmon zaxirasi</div><input class="form-control" style="width:220px"
-              id="inv-search-input" placeholder="Dori qidirish..." oninput="filterInventory()">
+
+        <div class="tabs" style="margin-bottom:20px">
+          <div class="tab active" onclick="switchInvTab('stock', this)">Ombor zaxirasi</div>
+          <div class="tab" onclick="switchInvTab('orders', this)">Buyurtmalar</div>
+        </div>
+
+        <div id="inv-stock-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">💊 Dori-darmon zaxirasi</div>
+              <input class="form-control" style="width:220px" id="inv-search-input" placeholder="Dori qidirish..."
+                oninput="filterInventory()">
+            </div>
+            <div id="inventory-list"></div>
           </div>
-          <div id="inventory-list"></div>
+        </div>
+
+        <div id="inv-orders-content" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📦 Buyurtmalar ro'yxati</div>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Dori nomi</th>
+                    <th>Yetkazib beruvchi</th>
+                    <th>Miqdor</th>
+                    <th>Summa</th>
+                    <th>Holat</th>
+                    <th>Amal</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-list"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
       <div class="page" id="page-settings">
@@ -1311,30 +1343,68 @@
       </div>
     </div>
   </div>
-  <div class="modal-overlay" id="add-notif-modal">
+  <div class="modal-overlay" id="add-order-modal">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">🔔 Yangi ogohlantirish</div>
-        <button class="modal-close" onclick="closeModal('add-notif-modal')">×</button>
+        <div class="modal-title">📦 Yangi buyurtma yaratish</div>
+        <button class="modal-close" onclick="closeModal('add-order-modal')">×</button>
       </div>
       <div class="form-group">
-        <label class="form-label">Xabar matni *</label>
-        <textarea class="form-control" id="notif-message"
-          placeholder="Masalan: Dori-darmon zaxirasi kamaymoqda..."></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Turi</label>
-        <select class="form-control" id="notif-type">
-          <option value="info">Ma'lumot (Ko'k)</option>
-          <option value="warning">Ogohlantirish (Sariq)</option>
-          <option value="error">Hatar (Qizil)</option>
+        <label class="form-label">Dori tanlang *</label>
+        <select class="form-control" id="order-drug-id" onchange="updateOrderDrugName()">
+          <option value="">-- Tanlang --</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label">Yetkazib beruvchi *</label>
+        <select class="form-control" id="order-supplier-id">
+          <option value="">-- Tanlang --</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Miqdor *</label>
+          <input class="form-control" type="number" id="order-qty" placeholder="100" oninput="calcOrderTotal()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dona narxi (so'm) *</label>
+          <input class="form-control" type="number" id="order-price" placeholder="5000" oninput="calcOrderTotal()">
+        </div>
+      </div>
+      <div
+        style="margin-top:10px; padding:10px; background:rgba(67,97,238,0.05); border-radius:8px; display:flex; justify-content:space-between; align-items:center">
+        <span style="font-size:12px; color:var(--text3)">Jami kutilayotgan summa:</span>
+        <strong id="order-total-display" style="color:var(--accent)">0 so'm</strong>
+      </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('add-notif-modal')">Bekor qilish</button>
-        <button class="btn btn-primary" onclick="addNotification()">✅ Saqlash</button>
+        <button class="btn btn-outline" onclick="closeModal('add-order-modal')">Bekor qilish</button>
+        <button class="btn btn-primary" onclick="addOrder()">✅ Yuborish</button>
       </div>
     </div>
+  </div>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔔 Yangi ogohlantirish</div>
+      <button class="modal-close" onclick="closeModal('add-notif-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Xabar matni *</label>
+      <textarea class="form-control" id="notif-message"
+        placeholder="Masalan: Dori-darmon zaxirasi kamaymoqda..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Turi</label>
+      <select class="form-control" id="notif-type">
+        <option value="info">Ma'lumot (Ko'k)</option>
+        <option value="warning">Ogohlantirish (Sariq)</option>
+        <option value="error">Hatar (Qizil)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('add-notif-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="addNotification()">✅ Saqlash</button>
+    </div>
+  </div>
   </div>
 
   <script>
@@ -1396,6 +1466,8 @@
     let billing = [];
     let inventory = [];
     let notifications = [];
+    let orders = [];
+    let suppliers = [];
 
     function populateDoctorSelects() {
       const options = doctors.map(d => `<option value="${d.name}">${d.name} (${d.spec})</option>`).join('');
@@ -1416,9 +1488,13 @@
         if (aRes.ok) appointments = await aRes.json();
         if (dRes.ok) { doctors = await dRes.json(); populateDoctorSelects(); }
         if (bRes.ok) billing = await bRes.json();
-        if (iRes.ok) inventory = await iRes.json();
+        if (iRes.ok) { inventory = await iRes.json(); renderInventory(); }
         const nRes = await fetch('/api/notifications');
         if (nRes.ok) notifications = await nRes.json();
+
+        loadOrders();
+        loadSuppliers();
+        checkExpiringDrugs();
 
         if (sRes.ok) {
           const stats = await sRes.json();
@@ -1784,6 +1860,10 @@
     function renderInventory(list) {
       const il = document.getElementById('inventory-list'); if (!il) return;
       const data = list || inventory;
+
+      const tc = document.getElementById('inv-total-count');
+      if (tc) tc.textContent = inventory.length;
+
       il.innerHTML = data.map(item => {
         const minVal = item.min_qty || 50;
         const pct = Math.min(Math.round((item.qty / (minVal * 3)) * 100), 100);
@@ -2002,6 +2082,137 @@
       }).catch(err => {
         console.error(err);
         alert('❌ Ogohlantirishni saqlashda xatolik: ' + err.message);
+      });
+    }
+
+    // --- Order Management ---
+    function switchInvTab(tab, el) {
+      document.querySelectorAll('#page-inventory .tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('inv-stock-content').style.display = tab === 'stock' ? 'block' : 'none';
+      document.getElementById('inv-orders-content').style.display = tab === 'orders' ? 'block' : 'none';
+      if (tab === 'orders') renderOrders();
+    }
+
+    async function loadOrders() {
+      try {
+        const res = await fetch('/api/orders');
+        if (res.ok) { orders = await res.json(); renderOrders(); }
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadSuppliers() {
+      try {
+        const res = await fetch('/api/suppliers');
+        if (res.ok) {
+          suppliers = await res.json();
+          const sSelect = document.getElementById('order-supplier-id');
+          if (sSelect) {
+            sSelect.innerHTML = '<option value="">-- Tanlang --</option>' +
+              suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function openOrderModal() {
+      const drugSelect = document.getElementById('order-drug-id');
+      if (drugSelect) {
+        drugSelect.innerHTML = '<option value="">-- Tanlang --</option>' +
+          inventory.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+      }
+      document.getElementById('order-qty').value = '';
+      document.getElementById('order-price').value = '';
+      calcOrderTotal();
+      openModal('add-order-modal');
+    }
+
+    let selectedDrugName = '';
+    function updateOrderDrugName() {
+      const sel = document.getElementById('order-drug-id');
+      selectedDrugName = sel.options[sel.selectedIndex].text;
+    }
+
+    function calcOrderTotal() {
+      const qtyInput = document.getElementById('order-qty');
+      const priceInput = document.getElementById('order-price');
+      const qty = parseFloat(qtyInput.value) || 0;
+      const price = parseFloat(priceInput.value) || 0;
+      const total = qty * price;
+      document.getElementById('order-total-display').textContent = total.toLocaleString() + " so'm";
+    }
+
+    async function addOrder() {
+      const inventory_id = document.getElementById('order-drug-id').value;
+      const supplier_id = document.getElementById('order-supplier-id').value;
+      const qty = document.getElementById('order-qty').value;
+      const unit_price = document.getElementById('order-price').value;
+
+      if (!inventory_id || !supplier_id || !qty || !unit_price) {
+        alert('⚠️ Barcha maydonlarni to\'ldiring!'); return;
+      }
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inventory_id, drug_name: selectedDrugName, supplier_id, qty, unit_price })
+        });
+        if (res.ok) {
+          alert('✅ Buyurtma muvaffaqiyatli yaratildi!');
+          closeModal('add-order-modal');
+          loadOrders();
+        }
+      } catch (e) { alert('❌ Xatolik yuz berdi'); }
+    }
+
+    function renderOrders() {
+      const ol = document.getElementById('orders-list');
+      if (!ol) return;
+      ol.innerHTML = orders.map(o => {
+        const statusClass = o.status === 'Kutilmoqda' ? 'badge-amber' : 'badge-green';
+        const action = o.status === 'Kutilmoqda' ?
+          `<button class="btn btn-primary btn-sm" onclick="receiveOrder(${o.id})">Qabul qilish</button>` : '—';
+        return `<tr>
+          <td>${o.drug_name}</td>
+          <td>${o.supplier_name || '—'}</td>
+          <td>${o.qty}</td>
+          <td>${parseFloat(o.total_price).toLocaleString()} so'm</td>
+          <td><span class="badge ${statusClass}">${o.status}</span></td>
+          <td style="text-align:right">${action}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function receiveOrder(id) {
+      if (!confirm('Ushbu buyurtmani qabul qilingan deb belgilamoqchimisiz? Ombor zaxirasi avtomatik oshiriladi.')) return;
+      try {
+        const res = await fetch(`/api/orders/${id}/receive`, { method: 'POST' });
+        if (res.ok) {
+          alert('✅ Buyurtma qabul qilindi. Zaxira yangilandi!');
+          loadData();
+        }
+      } catch (e) { alert('❌ Xatolik yuz berdi'); }
+    }
+
+    function checkExpiringDrugs() {
+      const now = new Date();
+      inventory.forEach(item => {
+        if (!item.exp_date || item.exp_date === '—') return;
+        // exp_date format: YYYY-MM
+        const [year, month] = item.exp_date.split('-').map(Number);
+        const expDate = new Date(year, month - 1, 1);
+        const diffMs = expDate - now;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 30 && diffDays > -30) {
+          // Add a temporary warning if not already in notifications
+          const msg = `⚠️ ${item.name} dorisining muddati tugashiga 1 oydan kam qoldi! (${item.exp_date})`;
+          if (!notifications.some(n => n.message === msg)) {
+            notifications.unshift({ message: msg, type: 'error' });
+            renderDashboard();
+          }
+        }
       });
     }
 
