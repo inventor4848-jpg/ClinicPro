@@ -312,8 +312,8 @@ app.get('/api/stats', async (req, res) => {
         // Monthly totals: Inflow, Outflow, Profit
         const financeRes = await db.query(`
           SELECT 
-            COALESCE(SUM(CASE WHEN type = 'Kirim' AND status = 'To''langan' THEN amount ELSE 0 END), 0) as inflow,
-            COALESCE(SUM(CASE WHEN type = 'Chiqim' AND status = 'To''langan' THEN amount ELSE 0 END), 0) as outflow
+            COALESCE(SUM(CASE WHEN type = 'Kirim' THEN amount ELSE 0 END), 0) as inflow,
+            COALESCE(SUM(CASE WHEN type = 'Chiqim' THEN amount ELSE 0 END), 0) as outflow
           FROM finance 
           WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
         `);

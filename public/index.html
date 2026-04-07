@@ -169,7 +169,18 @@
     .topbar-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+    }
+
+    .topbar-clock {
+      font-family: inherit;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--bg3);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid var(--border);
     }
 
     .search-box {
@@ -756,6 +767,7 @@
       <div class="topbar-right">
         <input class="search-box" type="text" id="global-search"
           placeholder="🔍  Bemor, shifokor yoki xizmat qidirish..." oninput="globalSearch(this.value)">
+        <div class="topbar-clock" id="topbar-clock">00:00:00</div>
         <div class="notif-btn" onclick="showNotifications()" title="Bildirishnomalar">🔔<div class="notif-dot"></div>
         </div>
         <div class="avatar" id="top-avatar" title="Profil" onclick="showPage('settings',null)">AK</div>
@@ -964,7 +976,7 @@
         <div class="grid-2" style="margin-bottom:20px">
           <div class="card">
             <div class="card-header">
-              <div class="card-title">📊 Oylik statistika (Yanvar 2024)</div>
+              <div class="card-title" id="report-stat-title">📊 Oylik statistika</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:14px">
               <div
@@ -2243,23 +2255,39 @@
     function checkExpiringDrugs() {
       const now = new Date();
       inventory.forEach(item => {
-        if (!item.exp_date || item.exp_date === '—') return;
-        // exp_date format: YYYY-MM
-        const [year, month] = item.exp_date.split('-').map(Number);
-        const expDate = new Date(year, month - 1, 1);
-        const diffMs = expDate - now;
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 30 && diffDays > -30) {
-          // Add a temporary warning if not already in notifications
-          const msg = `⚠️ ${item.name} dorisining muddati tugashiga 1 oydan kam qoldi! (${item.exp_date})`;
+        if (!item.exp_date) return;
+        const exp = new Date(item.exp_date);
+        const diff = (exp - now) / (1000 * 60 * 60 * 24);
+        if (diff <= 30 && diff > 0) {
+          const msg = `⚠️ Diqqat! "${item.name}" muddati yaqinlashmoqda: ${item.exp_date.substring(0, 10)}`;
           if (!notifications.some(n => n.message === msg)) {
-            notifications.unshift({ message: msg, type: 'error' });
-            renderDashboard();
+            // Auto add locally for UI
+            notifications.unshift({ id: Date.now(), message: msg, type: 'error', date: new Date().toISOString() });
           }
         }
       });
+      renderDashboard();
     }
+
+    function updateClock() {
+      const now = new Date();
+      const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const clockEl = document.getElementById('topbar-clock');
+      if (clockEl) clockEl.textContent = now.toLocaleTimeString('uz-UZ', options);
+    }
+    setInterval(updateClock, 1000);
+
+    function updateReportTitle() {
+      const now = new Date();
+      const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
+      const titleEl = document.getElementById('report-stat-title');
+      if (titleEl) titleEl.innerHTML = `📊 Oylik statistika (${months[now.getMonth()]} ${now.getFullYear()})`;
+    }
+
+    window.onload = () => {
+      updateClock();
+      updateReportTitle();
+    };
 
     function globalSearch(q) {
       if (!q || q.length < 2) return;
