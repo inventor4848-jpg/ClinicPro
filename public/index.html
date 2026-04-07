@@ -769,13 +769,13 @@
             <div class="stat-value" style="color:var(--green)" id="stat-appts">24</div>
             <div class="stat-change up">↑ 3 ta yangi</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" id="card-income">
             <div class="stat-icon">💰</div>
             <div class="stat-label">Oylik daromad</div>
             <div class="stat-value" style="color:var(--amber)" id="stat-income">0</div>
             <div class="stat-change up" id="stat-income-change">↑ 0% o'sish</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" id="card-inventory">
             <div class="stat-icon">💊</div>
             <div class="stat-label">Kam zahiradagi dorilar</div>
             <div class="stat-value" style="color:var(--red)" id="stat-low-stock">0</div>
@@ -1439,6 +1439,17 @@
     const avatarColors = ['rgba(59,130,246,0.2);color:var(--accent)', 'rgba(168,85,247,0.2);color:var(--purple)', 'rgba(20,184,166,0.2);color:var(--teal)', 'rgba(245,158,11,0.2);color:var(--amber)', 'rgba(239,68,68,0.2);color:var(--red)', 'rgba(34,197,94,0.2);color:var(--green)'];
     function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
     function renderDashboard() {
+      // Hide sensitive cards for doctors
+      const incomeCard = document.getElementById('card-income');
+      const inventoryCard = document.getElementById('card-inventory');
+      if (currentRole === 'doctor') {
+        if (incomeCard) incomeCard.style.display = 'none';
+        if (inventoryCard) inventoryCard.style.display = 'none';
+      } else {
+        if (incomeCard) incomeCard.style.display = 'block';
+        if (inventoryCard) inventoryCard.style.display = 'block';
+      }
+
       const ts = document.getElementById('today-schedule');
       if (ts) ts.innerHTML = appointments.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.appointment_time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient_name || '') + '</div><div style="flex:1"><div class="slot-name">' + a.patient_name + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
 
