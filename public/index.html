@@ -1222,6 +1222,10 @@
           <input class="form-control" id="doc-exp" placeholder="Masalan: 5 yil">
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Rasm yuklash</label>
+        <input class="form-control" type="file" id="doc-avatar" accept="image/*">
+      </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('add-doctor-modal')">Bekor qilish</button>
         <button class="btn btn-primary" onclick="addDoctor()">✅ Saqlash</button>
@@ -1553,7 +1557,8 @@
       if (!g) return;
       g.innerHTML = doctors.map((d, i) => {
         const adminControls = currentRole === 'admin' ? '<button class="btn btn-danger btn-sm" onclick="deleteDoctor(' + d.id + ')" style="position:absolute;top:12px;right:12px;padding:4px 8px;font-size:10px;">🗑 O\'chirish</button>' : '';
-        return '<div class="card" style="position:relative;transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">' + adminControls + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + '">' + initials(d.name || '') + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>';
+        const avatarHtml = d.avatar ? '<img src="' + d.avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials(d.name || '');
+        return '<div class="card" style="position:relative;transition:transform 0.2s;cursor:default" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">' + adminControls + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="patient-avatar" style="width:46px;height:46px;font-size:16px;background:' + avatarColor(i) + ';overflow:hidden">' + avatarHtml + '</div><div><div style="font-weight:600;font-size:14px;color:var(--text)">' + d.name + '</div><div style="font-size:12px;color:var(--text3);margin-top:2px">' + d.spec + '</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px"><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Tajriba</div><div style="font-weight:600;color:var(--text);margin-top:2px">' + d.exp + '</div></div><div style="background:var(--bg3);border-radius:6px;padding:8px;text-align:center"><div style="color:var(--text3)">Reyting</div><div style="font-weight:600;color:var(--amber);margin-top:2px">⭐ ' + d.rating + '</div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text3)">Bandlik</span><span style="color:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + ';font-weight:600">' + d.load + '%</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:' + d.load + '%;background:' + (d.load > 80 ? 'var(--red)' : d.load > 60 ? 'var(--amber)' : 'var(--green)') + '"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text3)">' + d.patients + ' ta bemor</span><span class="badge badge-green">Faol</span></div></div>';
       }).join('');
     }
     function renderBilling() {
@@ -1665,10 +1670,26 @@
       const name = document.getElementById('doc-name').value;
       const spec = document.getElementById('doc-spec').value;
       const exp = document.getElementById('doc-exp').value;
+      const fileInput = document.getElementById('doc-avatar');
+
       if (!name || !spec) { alert('⚠️ Ism va mutaxassislik kiritish majburiy!'); return; }
+
+      let avatarData = null;
+      if (fileInput && fileInput.files.length > 0) {
+        const reader = new FileReader();
+        reader.readAsDataURL(fileInput.files[0]);
+        reader.onload = () => {
+          submitDoctorData(name, spec, exp, reader.result);
+        };
+      } else {
+        submitDoctorData(name, spec, exp, null);
+      }
+    }
+
+    function submitDoctorData(name, spec, exp, avatar) {
       fetch('/api/doctors', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, spec, exp })
+        body: JSON.stringify({ name, spec, exp, avatar })
       }).then(() => {
         loadData();
         closeModal('add-doctor-modal');
@@ -1676,6 +1697,7 @@
         document.getElementById('doc-name').value = '';
         document.getElementById('doc-spec').value = '';
         document.getElementById('doc-exp').value = '';
+        if (document.getElementById('doc-avatar')) document.getElementById('doc-avatar').value = '';
       });
     }
 
@@ -1751,7 +1773,21 @@
       const found = patients.filter(p => (p.last + ' ' + p.first).toLowerCase().includes(lq) || p.phone.includes(lq) || p.id.toLowerCase().includes(lq) || p.diag.toLowerCase().includes(lq));
       if (found.length) { showPage('patients', null); document.getElementById('patient-search').value = q; renderPatients(found); }
     }
-    function showNotifications() { alert('📬 Bildirishnomalar:\n\n⚠️ Amoxicillin zaxirasi tugayapti\n⚠️ Ibuprofen zaxirasi kamaydi\n💳 Akbar Toshmatov to\'lovi muddati o\'tdi\n📋 5 ta tahlil natijasi kutilmoqda\n📅 Ertaga 3 ta jarrohlik rejalashtirilgan'); }
+    function showNotifications() {
+      if (!notifications || notifications.length === 0) {
+        alert('📬 Bildirishnomalar:\n\nHozircha ogohlantirishlar yo\'q');
+        return;
+      }
+      let msg = '📬 Bildirishnomalar:\n\n';
+      notifications.forEach(n => {
+        let icon = '📢';
+        if (n.type === 'error') icon = '🔴';
+        else if (n.type === 'warning') icon = '⚠️';
+        else if (n.type === 'info') icon = 'ℹ️';
+        msg += `${icon} ${n.message}\n`;
+      });
+      alert(msg);
+    }
     loadData();
   </script>
 </body>

@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS doctors (
   exp VARCHAR(50),
   patients INT DEFAULT 0,
   rating NUMERIC(2, 1) DEFAULT 5.0,
-  load INT DEFAULT 0
+  load INT DEFAULT 0,
+  avatar TEXT
 );
 
 CREATE TABLE IF NOT EXISTS finance (

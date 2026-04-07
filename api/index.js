@@ -139,13 +139,13 @@ app.get('/api/doctors', async (req, res) => {
 });
 
 app.post('/api/doctors', async (req, res) => {
-    const { name, spec, exp, patients, rating, load } = req.body;
+    const { name, spec, exp, patients, rating, load, avatar } = req.body;
     try {
         const query = `
-      INSERT INTO doctors (name, spec, exp, patients, rating, load)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+      INSERT INTO doctors (name, spec, exp, patients, rating, load, avatar)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
     `;
-        const values = [name, spec, exp, patients || 0, rating || 5.0, load || 0];
+        const values = [name, spec, exp, patients || 0, rating || 5.0, load || 0, avatar || null];
         const { rows } = await db.query(query, values);
         res.status(201).json(rows[0]);
     } catch (err) {
