@@ -2,6 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 
+// Migration: Ensure category column exists in finance
+(async () => {
+    try {
+        await db.query(`ALTER TABLE finance ADD COLUMN IF NOT EXISTS category VARCHAR(20)`);
+        await db.query(`UPDATE finance SET category = 'Chiqim' WHERE type = 'Chiqim' AND category IS NULL`);
+        await db.query(`UPDATE finance SET category = 'Kirim' WHERE (type != 'Chiqim' OR type IS NULL) AND category IS NULL`);
+    } catch (e) {
+        console.error('Migration error:', e);
+    }
+})();
+
 const app = express();
 
 app.use(cors());
@@ -275,8 +286,8 @@ app.post('/api/orders/:id/receive', async (req, res) => {
         // 4. Record in finance as expense
         const financeId = 'EXP-' + Date.now().toString().slice(-6);
         await db.query(`
-            INSERT INTO finance (id, patient_name, service, amount, date, type, status)
-            VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Chiqim', 'To''langan')
+            INSERT INTO finance (id, patient_name, service, amount, date, type, status, category)
+            VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Karta', 'To''langan', 'Chiqim')
         `, [financeId, 'Omborxona', 'Dori xaridi: ' + order.drug_name, order.total_price]);
 
         res.json({ success: true });
@@ -286,13 +297,13 @@ app.post('/api/orders/:id/receive', async (req, res) => {
 });
 
 app.post('/api/finance', async (req, res) => {
-    const { id, patient_name, service, amount, date, type, status } = req.body;
+    const { id, patient_name, service, amount, date, type, status, category } = req.body;
     try {
         const query = `
-      INSERT INTO finance (id, patient_name, service, amount, date, type, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
+      INSERT INTO finance (id, patient_name, service, amount, date, type, status, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
     `;
-        const values = [id, patient_name, service, amount, date, type, status];
+        const values = [id, patient_name, service, amount, date, type, status, category || 'Kirim'];
         const { rows } = await db.query(query, values);
         res.status(201).json(rows[0]);
     } catch (err) {
@@ -312,8 +323,8 @@ app.get('/api/stats', async (req, res) => {
         // Monthly totals: Inflow, Outflow, Profit
         const financeRes = await db.query(`
           SELECT 
-            COALESCE(SUM(CASE WHEN type = 'Kirim' THEN amount ELSE 0 END), 0) as inflow,
-            COALESCE(SUM(CASE WHEN type = 'Chiqim' THEN amount ELSE 0 END), 0) as outflow
+            COALESCE(SUM(CASE WHEN category = 'Kirim' THEN amount ELSE 0 END), 0) as inflow,
+            COALESCE(SUM(CASE WHEN category = 'Chiqim' THEN amount ELSE 0 END), 0) as outflow
           FROM finance 
           WHERE date >= DATE_TRUNC('month', CURRENT_DATE)
         `);

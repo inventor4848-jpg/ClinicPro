@@ -2005,7 +2005,8 @@
           amount,
           date: new Date().toISOString().split('T')[0],
           type: type,
-          status: 'To\'langan'
+          status: 'To\'langan',
+          category: 'Kirim'
         })
       }).then(() => {
         loadData();
@@ -2237,7 +2238,7 @@
       const payload = {
         id: 'EXP-' + Date.now().toString().slice(-6),
         patient_name, service, amount,
-        type: 'Chiqim', status: 'To\'langan'
+        type: 'Karta', status: 'To\'langan', category: 'Chiqim'
       };
 
       try {
@@ -2271,9 +2272,12 @@
 
     function updateClock() {
       const now = new Date();
-      const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const d = String(now.getDate()).padStart(2, '0');
+      const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
+      const y = now.getFullYear();
+      const time = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const clockEl = document.getElementById('topbar-clock');
-      if (clockEl) clockEl.textContent = now.toLocaleTimeString('uz-UZ', options);
+      if (clockEl) clockEl.textContent = `${d} ${months[now.getMonth()]} ${y}, ${time}`;
     }
     setInterval(updateClock, 1000);
 
