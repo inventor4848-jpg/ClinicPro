@@ -840,10 +840,6 @@
               placeholder="Ism, telefon yoki ID bo'yicha qidirish..." oninput="filterPatients()">
             <select class="form-control" style="width:190px" id="filter-doctor" onchange="filterPatients()">
               <option value="">Barcha shifokorlar</option>
-              <option>Dr. Karimov (Terapevt)</option>
-              <option>Dr. Nazarov (Kardiolog)</option>
-              <option>Dr. Yusupova (Nevropatolog)</option>
-              <option>Dr. Mirzaev (Jarroh)</option>
             </select>
             <select class="form-control" style="width:160px" id="filter-status" onchange="filterPatients()">
               <option value="">Barcha holatlar</option>
@@ -1132,12 +1128,6 @@
           placeholder="Masalan: Gipertenziya, Diabet..."></div>
       <div class="form-group"><label class="form-label">Mas'ul shifokor</label>
         <select class="form-control" id="p-doc">
-          <option>Dr. Karimov (Terapevt)</option>
-          <option>Dr. Nazarov (Kardiolog)</option>
-          <option>Dr. Yusupova (Nevropatolog)</option>
-          <option>Dr. Mirzaev (Jarroh)</option>
-          <option>Dr. Nazarova (Ginekolog)</option>
-          <option>Dr. Toshev (Pediatr)</option>
         </select>
       </div>
       <div class="form-group"><label class="form-label">Qo'shimcha izoh</label><textarea class="form-control"
@@ -1171,26 +1161,23 @@
       </div>
       <div class="form-group"><label class="form-label">Shifokor *</label>
         <select class="form-control" id="appt-doc">
-          <option>Dr. Karimov (Terapevt)</option>
-          <option>Dr. Nazarov (Kardiolog)</option>
-          <option>Dr. Yusupova (Nevropatolog)</option>
-          <option>Dr. Mirzaev (Jarroh)</option>
-          <option>Dr. Nazarova (Ginekolog)</option>
-          <option>Dr. Toshev (Pediatr)</option>
         </select>
       </div>
       <div class="form-group"><label class="form-label">Xizmat turi *</label>
         <select class="form-control" id="appt-type">
-          <option>Dastlabki konsultatsiya</option>
-          <option>Takroriy konsultatsiya</option>
-          <option>Tekshiruv (USI)</option>
-          <option>Qon tahlili</option>
-          <option>Siydik tahlili</option>
+          <option>ExoKG</option>
+          <option>Sog'liq safariga chiqish</option>
           <option>EKG</option>
-          <option>MRI / KT</option>
+          <option>UZI</option>
+          <option>Laboratoriya</option>
+          <option>Fizioterapiya</option>
+          <option>Mammografiya</option>
           <option>Rentgen</option>
-          <option>Jarrohlik konsultatsiyasi</option>
-          <option>Protsedura</option>
+          <option>Ozon terapiya</option>
+          <option>Muolaja xonasi</option>
+          <option>Holter</option>
+          <option>Audiogramma</option>
+          <option>Endoskopik tadqiqot usullari</option>
         </select>
       </div>
       <div class="form-group"><label class="form-label">Izoh</label><textarea class="form-control" id="appt-note"
@@ -1259,6 +1246,13 @@
       <div class="form-group">
         <label class="form-label">Summa (so'm) *</label>
         <input class="form-control" type="number" id="fin-amount" placeholder="50000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">To'lov turi</label>
+        <select class="form-control" id="fin-type">
+          <option value="Karta">Karta</option>
+          <option value="Naqd">Naqd pul</option>
+        </select>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="closeModal('add-finance-modal')">Bekor qilish</button>
@@ -1378,6 +1372,16 @@
     let inventory = [];
     let notifications = [];
 
+    function populateDoctorSelects() {
+      const options = doctors.map(d => `<option value="${d.name}">${d.name} (${d.spec})</option>`).join('');
+      const apptDoc = document.getElementById('appt-doc');
+      const pDoc = document.getElementById('p-doc');
+      const filterDoc = document.getElementById('filter-doctor');
+      if (apptDoc) apptDoc.innerHTML = options;
+      if (pDoc) pDoc.innerHTML = options;
+      if (filterDoc) filterDoc.innerHTML = '<option value="">Barcha shifokorlar</option>' + options;
+    }
+
     async function loadData() {
       try {
         const [pRes, aRes, dRes, bRes, iRes, sRes] = await Promise.all([
@@ -1385,7 +1389,7 @@
         ]);
         if (pRes.ok) patients = await pRes.json();
         if (aRes.ok) appointments = await aRes.json();
-        if (dRes.ok) doctors = await dRes.json();
+        if (dRes.ok) { doctors = await dRes.json(); populateDoctorSelects(); }
         if (bRes.ok) billing = await bRes.json();
         if (iRes.ok) inventory = await iRes.json();
         const nRes = await fetch('/api/notifications');
@@ -1685,6 +1689,7 @@
       const patient = document.getElementById('fin-patient').value;
       const service = document.getElementById('fin-service').value;
       const amount = document.getElementById('fin-amount').value;
+      const type = document.getElementById('fin-type') ? document.getElementById('fin-type').value : 'Karta';
       if (!amount) { alert('⚠️ Summani kiriting!'); return; }
       fetch('/api/finance', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1694,7 +1699,7 @@
           service,
           amount,
           date: new Date().toISOString().split('T')[0],
-          type: 'Karta',
+          type: type,
           status: 'To\'langan'
         })
       }).then(() => {
