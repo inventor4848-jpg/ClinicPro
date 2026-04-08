@@ -467,11 +467,11 @@ app.post('/api/ai/chat', async (req, res) => {
     const { message, context } = req.body;
 
     // Check DB for API key first, fallback to .env
-    let GROQ_API_KEY = process.env.GROQ_API_KEY;
+    let GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim();
     try {
         const { rows } = await db.query("SELECT value FROM settings WHERE key = 'ai_api_key'");
         if (rows.length > 0 && rows[0].value) {
-            GROQ_API_KEY = rows[0].value;
+            GROQ_API_KEY = rows[0].value.trim();
         }
     } catch (e) {
         console.error('Error fetching AI key from DB:', e);
@@ -480,6 +480,9 @@ app.post('/api/ai/chat', async (req, res) => {
     if (!GROQ_API_KEY) {
         return res.status(500).json({ error: "Groq API key is missing!" });
     }
+
+    // Debug: Log key length (safe)
+    console.log('Using AI Key with length:', GROQ_API_KEY.length);
 
     try {
         const systemPrompt = `Siz "Klinika Yordamchisi" nomli AI assistansiz. 
