@@ -467,11 +467,11 @@ app.post('/api/ai/chat', async (req, res) => {
     const { message, context } = req.body;
 
     // Check DB for API key first, fallback to .env
-    let GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim();
+    let GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
     try {
         const { rows } = await db.query("SELECT value FROM settings WHERE key = 'ai_api_key'");
         if (rows.length > 0 && rows[0].value) {
-            GROQ_API_KEY = rows[0].value.trim();
+            GROQ_API_KEY = rows[0].value.trim().replace(/^["']|["']$/g, '');
         }
     } catch (e) {
         console.error('Error fetching AI key from DB:', e);
@@ -481,8 +481,8 @@ app.post('/api/ai/chat', async (req, res) => {
         return res.status(500).json({ error: "Groq API key is missing!" });
     }
 
-    // Debug: Log key length (safe)
-    console.log('Using AI Key with length:', GROQ_API_KEY.length);
+    // Debug: Log safe key info
+    console.log(`Key info: length=${GROQ_API_KEY.length}, startsWith=${GROQ_API_KEY.substring(0, 7)}, endsWith=${GROQ_API_KEY.substring(GROQ_API_KEY.length - 4)}`);
 
     try {
         const systemPrompt = `Siz "Klinika Yordamchisi" nomli AI assistansiz. 
@@ -503,7 +503,7 @@ Agar foydalanuvchi sahifa haqida so'rasa, uning roliga bosqichma-bosqich yordam 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama3-8b-8192',
+                model: 'llama-3.1-8b-instant',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: message }
