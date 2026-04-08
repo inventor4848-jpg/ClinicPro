@@ -898,6 +898,7 @@
             <table>
               <thead>
                 <tr>
+                  <th>Sana</th>
                   <th>Vaqt</th>
                   <th>Bemor</th>
                   <th>Shifokor</th>
@@ -1732,7 +1733,16 @@
       }
 
       const ts = document.getElementById('today-schedule');
-      if (ts) ts.innerHTML = appointments.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.appointment_time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient_name || '') + '</div><div style="flex:1"><div class="slot-name">' + a.patient_name + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayAppts = appointments.filter(a => (a.appointment_date || '').substring(0, 10) === todayStr);
+
+      if (ts) {
+        if (todayAppts.length === 0) {
+          ts.innerHTML = '<div style="text-align:center;padding:15px;color:var(--text3);font-size:13px">Bugun uchun qabullar yo\'q</div>';
+        } else {
+          ts.innerHTML = todayAppts.slice(0, 5).map((a, i) => '<div class="schedule-slot"><div class="slot-time">' + a.appointment_time + '</div><div class="patient-avatar" style="background:' + avatarColor(i) + '">' + initials(a.patient_name || '') + '</div><div style="flex:1"><div class="slot-name">' + a.patient_name + '</div><div class="slot-type">' + a.doctor + ' · ' + a.type + '</div></div>' + statusBadge(a.status) + '</div>').join('');
+        }
+      }
 
       const dl = document.getElementById('doc-load');
       if (dl) {
@@ -1807,22 +1817,54 @@
       renderAppointments();
     }
     function renderAppointments(list) {
-      const data = list || appointments;
+      const allAppts = list || appointments;
       const tb = document.getElementById('appt-table');
       if (!tb) return;
-      tb.innerHTML = data.map((a, i) => {
-        let actionBtn = '';
-        if (currentRole === 'doctor') {
-          if (a.status !== 'Davolangan') {
-            actionBtn = '<button class="btn btn-primary btn-sm" onclick="changeApptStatus(' + a.id + ', \'FORCE_DONE\')" title="Qabul qilish">✅ Qabul qilindi</button>';
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+      const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+      let filtered = allAppts;
+      if (currentApptFilter === 'today') {
+        filtered = allAppts.filter(a => (a.appointment_date || '').substring(0, 10) === todayStr);
+      } else if (currentApptFilter === 'tomorrow') {
+        filtered = allAppts.filter(a => (a.appointment_date || '').substring(0, 10) === tomorrowStr);
+      } else if (currentApptFilter === 'week') {
+        filtered = allAppts.filter(a => {
+          const d = (a.appointment_date || '').substring(0, 10);
+          return d >= todayStr && d <= nextWeekStr;
+        });
+      }
+
+      // Sort by date and time
+      filtered.sort((a, b) => {
+        const d1 = (a.appointment_date || '').substring(0, 10) + ' ' + (a.appointment_time || '');
+        const d2 = (b.appointment_date || '').substring(0, 10) + ' ' + (b.appointment_time || '');
+        return d1.localeCompare(d2);
+      });
+
+      tb.innerHTML = filtered.length === 0
+        ? '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">Qabullar topilmadi</td></tr>'
+        : filtered.map((a, i) => {
+          const dateStr = (a.appointment_date || '').substring(0, 10);
+          let actionBtn = '';
+          if (currentRole === 'doctor') {
+            if (a.status !== 'Davolangan') {
+              actionBtn = '<button class="btn btn-primary btn-sm" onclick="changeApptStatus(' + a.id + ', \'FORCE_DONE\')" title="Qabul qilish">✅ Qabul qilindi</button>';
+            } else {
+              actionBtn = '<span style="color:var(--green);font-size:12px;font-weight:600">Terapiya yakunlandi</span>';
+            }
           } else {
-            actionBtn = '<span style="color:var(--green);font-size:12px;font-weight:600">Terapiya yakunlandi</span>';
+            actionBtn = '<button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + a.id + ', \'' + a.status + '\')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + a.id + ')" title="O\'chirish">🗑</button>';
           }
-        } else {
-          actionBtn = '<button class="btn btn-outline btn-sm" onclick="changeApptStatus(' + a.id + ', \'' + a.status + '\')" title="Holatni o\'zgartirish">🔄</button><button class="btn btn-danger btn-sm" onclick="deleteAppt(' + a.id + ')" title="O\'chirish">🗑</button>';
-        }
-        return '<tr><td style="color:var(--accent);font-weight:700">' + a.appointment_time + '</td><td style="color:var(--text)">' + a.patient_name + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px">' + actionBtn + '</div></td></tr>';
-      }).join('');
+          return '<tr><td style="color:var(--text3);font-size:12px">' + dateStr + '</td><td style="color:var(--accent);font-weight:700">' + a.appointment_time + '</td><td style="color:var(--text)">' + a.patient_name + '</td><td>' + a.doctor + '</td><td>' + a.type + '</td><td>' + statusBadge(a.status) + '</td><td><div style="display:flex;gap:6px">' + actionBtn + '</div></td></tr>';
+        }).join('');
     }
     function changeApptStatus(id, currentStatus) {
       let newStatus = currentStatus;
