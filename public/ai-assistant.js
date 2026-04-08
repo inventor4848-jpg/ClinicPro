@@ -9,7 +9,7 @@
                 <div class="close-btn" id="ai-close">&times;</div>
             </div>
             <div id="ai-messages">
-                <div class="ai-msg bot">Assalomu alaykum! Men Klinika Yordamchisiman. Sizga qanday yordam bera olaman?</div>
+                <div class="ai-msg bot">Assalomu alaykum! Men Klinika Yordamchisiman. Savollaringiz bo'lsa, yordam berishga tayyorman.</div>
             </div>
             <div class="ai-typing" id="ai-typing" style="padding: 0 16px 8px;">AI o'ylamoqda...</div>
             <div id="ai-input-area">
@@ -39,6 +39,8 @@
 
     closeBtn.onclick = () => {
         window.classList.remove('active');
+        // Clear history on close
+        messages.innerHTML = `<div class="ai-msg bot">Assalomu alaykum! Men Klinika Yordamchisiman. Savollaringiz bo'lsa, yordam berishga tayyorman.</div>`;
     };
 
     // Send logic
