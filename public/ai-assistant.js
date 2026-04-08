@@ -28,6 +28,7 @@
     const sendBtn = document.getElementById('ai-send-btn');
     const messages = document.getElementById('ai-messages');
     const typing = document.getElementById('ai-typing');
+    let chatHistory = [];
 
     // Toggle window
     btn.onclick = () => {
@@ -41,6 +42,7 @@
         window.classList.remove('active');
         // Clear history on close
         messages.innerHTML = `<div class="ai-msg bot">Assalomu alaykum! Men Klinika Yordamchisiman. Savollaringiz bo'lsa, yordam berishga tayyorman.</div>`;
+        chatHistory = [];
     };
 
     // Send logic
@@ -50,6 +52,7 @@
 
         // Add user message to UI
         addMessage(text, 'user');
+        chatHistory.push({ role: 'user', content: text });
         input.value = '';
 
         // Show typing
@@ -69,6 +72,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: text,
+                    history: chatHistory.slice(-10), // Send last 10 messages for context
                     context: {
                         page: pageId,
                         role: role,
@@ -80,6 +84,7 @@
             if (response.ok) {
                 const data = await response.json();
                 addMessage(data.message, 'bot');
+                chatHistory.push({ role: 'assistant', content: data.message });
             } else {
                 const data = await response.json();
                 addMessage("Xatolik: " + (data.error || "Noma'lum xatolik yuz berdi."), 'bot');

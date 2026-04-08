@@ -464,7 +464,7 @@ app.put('/api/settings', async (req, res) => {
 
 // AI Assistant API (using Groq)
 app.post('/api/ai/chat', async (req, res) => {
-    const { message, context } = req.body;
+    const { message, history, context } = req.body;
 
     // Avtomatik ishlashi uchun kalitni qismlarga bo'lib yozamiz
     const part1 = "gsk_98flzttxFLQYHJlswN5q";
@@ -472,24 +472,15 @@ app.post('/api/ai/chat', async (req, res) => {
     const GROQ_API_KEY = part1 + part2;
 
     try {
-        const systemPrompt = `Siz "ClinicPro" tizimining professional va aqlli yordamchisisiz.
-Ismingiz: "Klinika Yordamchisi".
+        const systemPrompt = `Siz "ClinicPro" - klinika boshqaruv tizimining aqlli yordamchisisiz.
+Ismingiz: "Klinika Yordamchisi". Foydalanuvchi - klinika xodimi.
 
-MUHIM QOIDALAR:
-1. FAQAT TABIIY O'ZBEK TILIDA javob bering. Ingliz tilidan so'zma-so'z tarjima qilingan jumlalarni ishlatmang.
-2. GRAMMATIKA: "Qaysi so'ra o'ylayapsiz?" yoki "Sizga nima nu manosi bor?" kabi xato jumlalarni ASLO ishlatmang.
-3. PROFESSIONALLIK: Foydalanuvchi bilan "Siz" deb muloqot qiling.
-4. TAVSIYA ETILADIGAN JUNIYALAR: 
-   - "Sizga qanday yordam bera olaman?"
-   - "Savollaringiz bo'lsa, javob berishga tayyorman."
-   - "Ushbu bo'limda siz ... amallarini bajarishingiz mumkin."
-   - "Tizim bo'yicha yana qanday yordam kerak?"
-
-KONTEKST:
-- Sahifa: ${context?.page || 'Noma\'lum'}
-- Foydalanuvchi roli: ${context?.role || 'Noma\'lum'}
-
-Tibbiy masalalarda: Hech qachon umumiy dorilarni "zaxarli" deb atamang. Tizim bo'yicha texnik yordamga ko'proq e'tibor qarating.`;
+QOIDALAR:
+1. FAQAT TABIIY O'ZBEK TILIDA muloqot qiling.
+2. Har bir javobda "Sizga qanday yordam bera olaman?" deb takrorlamang. Savolga TO'G'RIDAN-TO'G'RI javob bering.
+3. Agar dori haqida so'rashsa, umumiy ma'lumot bering, lekin dori dozasini shifokor belgilashi kerakligini eslatib o'ting.
+4. Foydalanuvchi turgan sahifa: ${context?.page || 'Noma\'lum'}, roli: ${context?.role || 'Noma\'lum'}.
+5. Qisqa va foydali ma'lumot bering. Robot kabi emas, aqlli yordamchi kabi gapiring.`;
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -501,9 +492,9 @@ Tibbiy masalalarda: Hech qachon umumiy dorilarni "zaxarli" deb atamang. Tizim bo
                 model: 'llama-3.1-8b-instant',
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: message }
+                    ...(history || [])
                 ],
-                temperature: 0.3,
+                temperature: 0.5,
                 max_tokens: 1024
             })
         });
