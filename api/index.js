@@ -500,7 +500,7 @@ Agar foydalanuvchi sahifa haqida so'rasa, uning roliga bosqichma-bosqich yordam 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: 'llama3-8b-8192',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: message }
@@ -514,12 +514,13 @@ Agar foydalanuvchi sahifa haqida so'rasa, uning roliga bosqichma-bosqich yordam 
         if (data.choices && data.choices[0]) {
             res.json({ message: data.choices[0].message.content });
         } else {
-            console.error('Groq Error:', data);
-            res.status(500).json({ error: "AI javob berishda xatolik yuz berdi." });
+            console.error('Groq Error Details:', JSON.stringify(data));
+            const errMsg = data.error?.message || "AI javob berishda xatolik yuz berdi.";
+            res.status(500).json({ error: errMsg });
         }
     } catch (err) {
-        console.error('AI Chat Error:', err);
-        res.status(500).json({ error: err.message });
+        console.error('AI Chat Exception:', err);
+        res.status(500).json({ error: "Serverda xatolik: " + err.message });
     }
 });
 

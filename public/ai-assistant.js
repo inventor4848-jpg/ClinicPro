@@ -79,10 +79,11 @@
                 const data = await response.json();
                 addMessage(data.message, 'bot');
             } else {
-                addMessage("Kechirasiz, xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.", 'bot');
+                const data = await response.json();
+                addMessage("Xatolik: " + (data.error || "Noma'lum xatolik yuz berdi."), 'bot');
             }
         } catch (e) {
-            addMessage("Server bilan ulanishda xatolik.", 'bot');
+            addMessage("Server bilan ulanishda xatolik: " + e.message, 'bot');
         } finally {
             typing.style.display = 'none';
         }
