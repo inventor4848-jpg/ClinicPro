@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+require('dotenv').config();
 
 // Migration: Ensure category column exists in finance
 (async () => {
@@ -457,6 +458,67 @@ app.put('/api/settings', async (req, res) => {
         }
         res.json({ success: true });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// AI Assistant API (using Groq)
+app.post('/api/ai/chat', async (req, res) => {
+    const { message, context } = req.body;
+
+    // Check DB for API key first, fallback to .env
+    let GROQ_API_KEY = process.env.GROQ_API_KEY;
+    try {
+        const { rows } = await db.query("SELECT value FROM settings WHERE key = 'ai_api_key'");
+        if (rows.length > 0 && rows[0].value) {
+            GROQ_API_KEY = rows[0].value;
+        }
+    } catch (e) {
+        console.error('Error fetching AI key from DB:', e);
+    }
+
+    if (!GROQ_API_KEY) {
+        return res.status(500).json({ error: "Groq API key is missing!" });
+    }
+
+    try {
+        const systemPrompt = `Siz "Klinika Yordamchisi" nomli AI assistansiz. 
+Siz ClinicPro - klinika boshqaruv tizimining bir qismisiz.
+Hozirgi foydalanuvchi konteksti:
+- Sahifa: ${context?.page || 'Noma\'lum'}
+- Rol: ${context?.role || 'Noma\'lum'}
+- URL: ${context?.url || 'Noma\'lum'}
+
+Sizning vazifangiz foydalanuvchiga ushbu sahifa va tizim bo'yicha yordam berish. 
+Javoblaringiz qisqa, tushunarli va faqat o'zbek tilida bo'lishi kerak.
+Agar foydalanuvchi sahifa haqida so'rasa, uning roliga bosqichma-bosqich yordam bering.`;
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: message }
+                ],
+                temperature: 0.7,
+                max_tokens: 1024
+            })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+            res.json({ message: data.choices[0].message.content });
+        } else {
+            console.error('Groq Error:', data);
+            res.status(500).json({ error: "AI javob berishda xatolik yuz berdi." });
+        }
+    } catch (err) {
+        console.error('AI Chat Error:', err);
         res.status(500).json({ error: err.message });
     }
 });

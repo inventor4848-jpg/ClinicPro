@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+  key VARCHAR(50) PRIMARY KEY,
+  value TEXT
+);
+
 -- Boshlang'ich datalarni kiritish (faqat test uchun)
 INSERT INTO inventory (name, category, qty, min_qty, unit, exp_date, crit) VALUES
 ('Amoxicillin 500mg', 'Antibiotik', 12, 50, 'dona', '2025-06', TRUE),

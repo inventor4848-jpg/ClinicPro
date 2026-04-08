@@ -742,6 +742,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="ai-assistant.css">
 </head>
 
 <body>
@@ -1140,6 +1141,19 @@
               <div class="form-group"><label class="form-label">Yangi parol (ixtiyoriy)</label><input
                   class="form-control" id="profile-password" type="password" placeholder="Yangi parol..."></div>
               <button class="btn btn-primary" onclick="updateProfile()">Yangilash</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🤖 AI Yordamchi sozlamalari</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Groq API kaliti</label>
+                <input class="form-control" id="settings-ai-key" type="password" placeholder="gsk_...">
+                <div style="font-size:11px;color:var(--text3);margin-top:6px">Kalitni kiritmasangiz, tizim .env
+                  faylidagi kalitdan foydalanadi.</div>
+              </div>
+              <button class="btn btn-primary" onclick="saveAISettings()">Saqlash</button>
             </div>
           </div>
         </div>
@@ -1648,6 +1662,7 @@
           if (s.duration) document.getElementById('settings-duration').value = s.duration;
           if (s.currency) document.getElementById('settings-currency').value = s.currency;
           if (s.lang) document.getElementById('settings-lang').value = s.lang;
+          if (s.ai_api_key) document.getElementById('settings-ai-key').value = s.ai_api_key;
         }
       } catch (e) { console.error('Error loading settings:', e); }
     }
@@ -1673,6 +1688,11 @@
         lang: document.getElementById('settings-lang').value
       };
       saveSettings(settings, 'Sozlamalar saqlandi!');
+    }
+
+    async function saveAISettings() {
+      const key = document.getElementById('settings-ai-key').value;
+      saveSettings({ 'ai_api_key': key }, 'AI kaliti saqlandi!');
     }
 
     async function saveSettings(data, msg) {
@@ -2331,6 +2351,7 @@
     }
     loadData();
   </script>
+  <script src="ai-assistant.js"></script>
 </body>
 
 </html>
